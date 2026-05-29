@@ -23,8 +23,8 @@ body {
 
 /* Custom Scrollbar for Sleek Appearance */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -34,14 +34,47 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #1f2937;
   border-radius: 9999px;
-  border: 2px solid #030712;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #374151;
 }
 
-/* Keyframes for glowing gradients and pulse effects */
+/* Slide-out Drawer Panel Animation Tokens */
+.drawer-transition {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+/* Official SSC CGL / Testbook CBT Colors */
+.cbt-answered {
+  background-color: #22c55e !important; /* Green */
+  color: #ffffff !important;
+  border-color: #22c55e !important;
+  border-radius: 4px 4px 16px 4px !important; /* Testbook classic question status cut */
+}
+
+.cbt-review {
+  background-color: #8b5cf6 !important; /* Purple */
+  color: #ffffff !important;
+  border-color: #8b5cf6 !important;
+  border-radius: 50% !important; /* Circular for reviews */
+}
+
+.cbt-unanswered {
+  background-color: rgba(239, 68, 68, 0.1) !important; /* Translucent Red */
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  border-radius: 16px 4px 4px 4px !important;
+}
+
+.cbt-unvisited {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 4px !important;
+}
+
+/* Helper Utilities */
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
@@ -53,7 +86,6 @@ body {
   50% { opacity: 0.6; }
 }
 
-/* Helper Utilities */
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -118,4 +150,12 @@ body {
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
+}
+
+/* Touch Friendly active scale */
+.touch-scale {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.touch-scale:active {
+  transform: scale(0.96);
 }
