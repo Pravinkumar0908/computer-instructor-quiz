@@ -24,6 +24,7 @@ interface Question {
   category: string;
   difficulty: "Easy" | "Medium" | "Hard";
   explanation?: string;
+  quizName?: string;
 }
 
 interface Attempt {
@@ -34,6 +35,7 @@ interface Attempt {
   timeSpentSeconds: number;
   category: string;
   correctAnswersCount: number;
+  quizName?: string;
 }
 
 interface DashboardStats {
@@ -94,6 +96,7 @@ export default function ExamPrepPortal() {
   const [mockTimeLeft, setMockTimeLeft] = useState(600); // 10 mins default
   const [mockInitialTime, setMockInitialTime] = useState(600);
   const [mockActive, setMockActive] = useState(false);
+  const [mockQuestionLimit, setMockQuestionLimit] = useState<number>(15);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Mobile Navigator Sidebar
 
   // Interactive Tools Toggles
@@ -134,6 +137,7 @@ export default function ExamPrepPortal() {
   const [formCategory, setFormCategory] = useState(CATEGORIES[0]);
   const [formDifficulty, setFormDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium");
   const [formExplanation, setFormExplanation] = useState("");
+  const [formQuizName, setFormQuizName] = useState("Rajasthan Computer Instructor CBT Mock 1");
   const [formSuccessMessage, setFormSuccessMessage] = useState<string | null>(null);
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
 
@@ -145,6 +149,9 @@ export default function ExamPrepPortal() {
   const [jsonErrorMsg, setJsonErrorMsg] = useState<string | null>(null);
   const [isImportingBulk, setIsImportingBulk] = useState(false);
   const [bulkSuccessMsg, setBulkSuccessMsg] = useState<string | null>(null);
+  const [importQuizName, setImportQuizName] = useState("Rajasthan Computer Instructor CBT Mock 1");
+  const [selectedQuizName, setSelectedQuizName] = useState<string>("All Quizzes");
+  const [activeQuizName, setActiveQuizName] = useState<string | null>(null);
 
   // Premium AI Prompt Customizer States
   const [promptLanguage, setPromptLanguage] = useState<"dual" | "english" | "hindi">("dual");
@@ -293,10 +300,34 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
     try {
       const parsedData = JSON.parse(jsonInput);
+      let payloadToSubmit = parsedData;
+      const quizTitleToUse = importQuizName.trim() || "Rajasthan Computer Instructor CBT Mock 1";
+
+      if (Array.isArray(parsedData)) {
+        payloadToSubmit = parsedData.map(q => ({
+          ...q,
+          quizName: q.quizName || quizTitleToUse
+        }));
+      } else if (parsedData && Array.isArray(parsedData.questions)) {
+        const finalTitle = parsedData.title || quizTitleToUse;
+        payloadToSubmit = {
+          title: finalTitle,
+          questions: parsedData.questions.map((q: any) => ({
+            ...q,
+            quizName: q.quizName || finalTitle
+          }))
+        };
+      } else if (parsedData && typeof parsedData === "object") {
+        payloadToSubmit = {
+          ...parsedData,
+          quizName: parsedData.quizName || quizTitleToUse
+        };
+      }
+
       const response = await fetch("/api/questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsedData)
+        body: JSON.stringify(payloadToSubmit)
       });
 
       if (!response.ok) {
@@ -397,20 +428,32 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   };
 
   // Launch Practice Session
-  const startPractice = (category: string) => {
+  const startPractice = (category: string, quizName?: string) => {
+    const qName = quizName || selectedQuizName;
+    if (quizName) {
+      setSelectedQuizName(quizName);
+    }
     setSelectedCategory(category);
-    const filtered = category === "All Subjects" 
-      ? questions 
-      : questions.filter(q => q.category === category);
+
+    let filtered = questions;
+    if (qName && qName !== "All Quizzes") {
+      filtered = filtered.filter(q => (q.quizName || "Rajasthan Computer Instructor CBT Mock 1") === qName);
+    }
+    if (category !== "All Subjects") {
+      filtered = filtered.filter(q => q.category === category);
+    }
       
     if (filtered.length === 0) {
-      alert(`No questions added yet for ${category}. Feel free to add some using the creator tool below!`);
+      alert(`No questions found matching criteria.`);
       return;
     }
 
-    setPracticeQuestions(filtered);
+    // Shuffling practice questions for mixed/random practice feel
+    const randomized = [...filtered].sort(() => 0.5 - Math.random());
+
+    setPracticeQuestions(randomized);
     setPracticeIndex(0);
-    setPracticeAnswers(filtered.map(() => null));
+    setPracticeAnswers(randomized.map(() => null));
     setPracticeSubmitted(false);
     setView("practice");
   };
@@ -458,7 +501,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           totalQuestions: practiceQuestions.length,
           timeSpentSeconds: 0,
           category: selectedCategory,
-          correctAnswersCount: correctCount
+          correctAnswersCount: correctCount,
+          quizName: activeQuizName || "Rajasthan Computer Instructor CBT Mock 1"
         })
       });
 
@@ -472,14 +516,23 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   };
 
   // Transition to TCS iON Instructions Page
-  const transitionToInstructions = (category: string) => {
+  const transitionToInstructions = (category: string, quizName?: string) => {
+    const qName = quizName || selectedQuizName;
+    if (quizName) {
+      setSelectedQuizName(quizName);
+    }
     setSelectedCategory(category);
-    const filtered = category === "All Subjects"
-      ? questions
-      : questions.filter(q => q.category === category);
+
+    let filtered = questions;
+    if (qName && qName !== "All Quizzes") {
+      filtered = filtered.filter(q => (q.quizName || "Rajasthan Computer Instructor CBT Mock 1") === qName);
+    }
+    if (category !== "All Subjects") {
+      filtered = filtered.filter(q => q.category === category);
+    }
 
     if (filtered.length === 0) {
-      alert(`No questions found for ${category}. Add questions to simulate a mock exam.`);
+      alert(`No questions found matching criteria.`);
       return;
     }
 
@@ -489,19 +542,33 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
   // Launch Mock Test (TCS iON CBT Layout)
   const startMockTest = () => {
-    const filtered = selectedCategory === "All Subjects"
-      ? questions
-      : questions.filter(q => q.category === selectedCategory);
+    let filtered = questions;
+    if (selectedQuizName && selectedQuizName !== "All Quizzes") {
+      filtered = filtered.filter(q => (q.quizName || "Rajasthan Computer Instructor CBT Mock 1") === selectedQuizName);
+    }
+    if (selectedCategory !== "All Subjects") {
+      filtered = filtered.filter(q => q.category === selectedCategory);
+    }
 
-    // Limit to maximum 10 random questions, mixed/shuffled for authentic exam feel
-    const randomized = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 10);
-    setMockQuestions(randomized);
-    setMockIndex(0);
-    setMockAnswers(randomized.map(() => null));
-    setMockMarked(randomized.map(() => false));
-    setMockVisited(randomized.map((_, idx) => idx === 0)); // Initialize unvisited array
+    if (filtered.length === 0) {
+      alert("No questions found matching criteria.");
+      return;
+    }
+
+    // Limit and strictly shuffle/mix all questions for authentic exam feel
+    const randomized = [...filtered].sort(() => 0.5 - Math.random());
     
-    const calculatedTime = randomized.length * 60; // 60 seconds per question
+    // Choose length (either all questions or limited by mockQuestionLimit)
+    const limit = mockQuestionLimit === -1 ? randomized.length : Math.min(randomized.length, mockQuestionLimit);
+    const sliced = randomized.slice(0, limit);
+
+    setMockQuestions(sliced);
+    setMockIndex(0);
+    setMockAnswers(sliced.map(() => null));
+    setMockMarked(sliced.map(() => false));
+    setMockVisited(sliced.map((_, idx) => idx === 0)); // Initialize unvisited array
+    
+    const calculatedTime = sliced.length * 60; // 60 seconds per question
     setMockTimeLeft(calculatedTime);
     setMockInitialTime(calculatedTime);
     setMockActive(true);
@@ -592,7 +659,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           totalQuestions: mockQuestions.length,
           timeSpentSeconds: timeSpent,
           category: selectedCategory,
-          correctAnswersCount: correctCount
+          correctAnswersCount: correctCount,
+          quizName: activeQuizName || "Rajasthan Computer Instructor CBT Mock 1"
         })
       });
 
@@ -626,7 +694,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           answerIndex: formAnswerIndex,
           category: formCategory,
           difficulty: formDifficulty,
-          explanation: formExplanation
+          explanation: formExplanation,
+          quizName: formQuizName.trim() || "Rajasthan Computer Instructor CBT Mock 1"
         })
       });
 
@@ -682,19 +751,93 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     return Array.from(catsSet);
   }, [questions]);
 
-  // Stats computation helper (fallback if stats null)
+  // Group questions by Quiz Name (Unified Quiz Cards)
+  const quizzes = useMemo(() => {
+    const quizMap: Record<string, {
+      name: string;
+      questions: Question[];
+      categoryCounts: Record<string, number>;
+      difficulties: Set<string>;
+    }> = {};
+
+    questions.forEach(q => {
+      const qName = q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
+      if (!quizMap[qName]) {
+        quizMap[qName] = {
+          name: qName,
+          questions: [],
+          categoryCounts: {},
+          difficulties: new Set()
+        };
+      }
+      quizMap[qName].questions.push(q);
+      quizMap[qName].categoryCounts[q.category] = (quizMap[qName].categoryCounts[q.category] || 0) + 1;
+      quizMap[qName].difficulties.add(q.difficulty);
+    });
+
+    return Object.values(quizMap);
+  }, [questions]);
+
+  // Stats computation helper (segmenting stats by activeQuizName dynamically to prevent mixups)
   const dashboardStats = useMemo(() => {
-    if (stats) return stats;
+    // Extract raw attempts array from stats or fallback to empty
+    const allAttempts = stats?.recentAttempts || [];
     
-    const totalQ = questions.length;
+    // Filter questions and attempts if inside a specific Quiz Hub
+    const activeQuestions = activeQuizName
+      ? questions.filter(q => (q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1") === activeQuizName)
+      : questions;
+
+    const activeAttempts = activeQuizName
+      ? allAttempts.filter(a => (a.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1") === activeQuizName)
+      : allAttempts;
+
+    const totalQ = activeQuestions.length;
+    const totalA = activeAttempts.length;
+
+    let totalCorrect = 0;
+    let totalAnsweredQ = 0;
+    activeAttempts.forEach(a => {
+      totalCorrect += a.correctAnswersCount;
+      totalAnsweredQ += a.totalQuestions;
+    });
+
+    const avgAccuracy = totalAnsweredQ > 0 ? Math.round((totalCorrect / totalAnsweredQ) * 100) : 0;
+
+    // Build categoryStats specifically for this segmented list
+    const catStats: Record<string, { questionCount: number; solvedCount: number; accuracy: number }> = {};
+    activeQuestions.forEach(q => {
+      if (!catStats[q.category]) {
+        catStats[q.category] = { questionCount: 0, solvedCount: 0, accuracy: 0 };
+      }
+      catStats[q.category].questionCount++;
+    });
+
+    // Populate category solved counts and accuracy
+    const catAttempts: Record<string, { correct: number; total: number }> = {};
+    activeAttempts.forEach(a => {
+      const cat = a.category;
+      if (!catAttempts[cat]) {
+        catAttempts[cat] = { correct: 0, total: 0 };
+      }
+      catAttempts[cat].correct += a.correctAnswersCount;
+      catAttempts[cat].total += a.totalQuestions;
+    });
+
+    Object.keys(catStats).forEach(cat => {
+      const solved = catAttempts[cat] || { correct: 0, total: 0 };
+      catStats[cat].solvedCount = solved.total;
+      catStats[cat].accuracy = solved.total > 0 ? Math.round((solved.correct / solved.total) * 100) : 0;
+    });
+
     return {
       totalQuestions: totalQ,
-      totalAttempts: 0,
-      averageAccuracy: 0,
-      categoryStats: {},
-      recentAttempts: []
+      totalAttempts: totalA,
+      averageAccuracy: avgAccuracy,
+      categoryStats: catStats,
+      recentAttempts: activeAttempts.slice(0, 5) // Return 5 most recent attempts for this quiz
     };
-  }, [stats, questions]);
+  }, [stats, questions, activeQuizName]);
 
   // Canvas Drawing Handlers for Scratchpad
   const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -934,6 +1077,20 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   ))}
                 </div>
 
+                <div className="pt-2">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Quiz Name / Paper Title (क्विज / परीक्षा पत्र का नाम)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formQuizName}
+                    onChange={(e) => setFormQuizName(e.target.value)}
+                    placeholder="E.g. Rajasthan Computer Instructor CBT Mock 1"
+                    className="w-full rounded-xl p-3 text-sm glass-input text-white outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
@@ -1145,6 +1302,21 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   </div>
                 </div>
 
+                {/* Quiz Name Selection */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                    Quiz Name / Paper Title (क्विज / परीक्षा पत्र का शीर्षक):
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={importQuizName}
+                    onChange={(e) => setImportQuizName(e.target.value)}
+                    placeholder="E.g. Rajasthan Computer Instructor CBT Mock 1"
+                    className="w-full rounded-2xl p-3.5 text-xs bg-slate-950/60 border border-white/10 text-slate-300 placeholder-slate-600 outline-none focus:border-indigo-500/50"
+                  />
+                </div>
+
                 {/* Textarea container */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
@@ -1208,251 +1380,360 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* VIEW 1: HERO DASHBOARD HUB */}
-        {/* ========================================================================= */}
         {view === "dashboard" && (
           <div className="space-y-8 animate-fade-in">
             
-            {/* Header Hero Banner */}
-            <div className="glass-premium rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-              
-              <div className="space-y-3 max-w-2xl text-center md:text-left">
-                <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 text-xs font-semibold tracking-wider text-indigo-300 uppercase">
-                  Rajasthan, DSSSB & KVS Computer Instructor Syllabus
-                </span>
-                <h2 className="text-3xl font-extrabold md:text-4xl text-white tracking-tight leading-tight">
-                  कम्प्यूटर अनुदेशक <br className="hidden sm:inline" /> 
-                  <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent">
-                    CBT परीक्षा तैयारी पोर्टल
-                  </span>
-                </h2>
-                <p className="text-sm text-slate-300 max-w-xl">
-                  असीमित प्रैक्टिस सेशन और आधिकारिक स्तर के समय-बद्ध मॉक टेस्ट के साथ अपने कंप्यूटर विज्ञान कौशल को सुधारें। आपका डेटा 100% डायनेमिक है।
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                <button
-                  onClick={() => startPractice("All Subjects")}
-                  className="rounded-full bg-slate-800 hover:bg-slate-700 text-sm font-semibold py-3 px-6 border border-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/30"
-                >
-                  <BookOpenIcon size={18} className="text-indigo-400" />
-                  <span>Start Practice Session</span>
-                </button>
-                <button
-                  onClick={() => transitionToInstructions("All Subjects")}
-                  className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-sm font-semibold py-3 px-6 transition-all flex items-center justify-center gap-2 text-white cursor-pointer shadow-lg shadow-indigo-500/25"
-                >
-                  <TimerIcon size={18} />
-                  <span>Launch CBT Simulation</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Statistics Dashboard */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              
-              <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <BookOpenIcon size={48} className="text-indigo-400" />
-                </div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total CS Questions</p>
-                <p className="text-3xl font-extrabold mt-2 text-white">{dashboardStats.totalQuestions}</p>
-                <div className="mt-3 flex items-center gap-1.5 text-xs text-indigo-400">
-                  <span>Dynamic server database active</span>
-                </div>
-              </div>
-
-              <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <TrophyIcon size={48} className="text-purple-400" />
-                </div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Completed Simulations</p>
-                <p className="text-3xl font-extrabold mt-2 text-white">{dashboardStats.totalAttempts}</p>
-                <div className="mt-3 flex items-center gap-1.5 text-xs text-purple-400">
-                  <span>Attempts logged dynamically</span>
-                </div>
-              </div>
-
-              <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <ChartIcon size={48} className="text-emerald-400" />
-                </div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Average Accuracy</p>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <p className="text-3xl font-extrabold text-white">{dashboardStats.averageAccuracy}%</p>
-                </div>
-                <div className="mt-3 w-full bg-slate-800 rounded-full h-1.5">
-                  <div 
-                    className="bg-emerald-400 h-1.5 rounded-full transition-all duration-500" 
-                    style={{ width: `${dashboardStats.averageAccuracy}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-amber-500/30 transition-all">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <TimerIcon size={48} className="text-amber-400" />
-                </div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Preparation Progress</p>
-                <p className="text-3xl font-extrabold mt-2 text-white">
-                  {Math.min(100, Math.round((dashboardStats.totalQuestions / 40) * 100))}%
-                </p>
-                <div className="mt-3 flex items-center gap-1 text-xs text-slate-400">
-                  <span>Goal: 40+ Core Questions</span>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Main Content Grid: Categories & History */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-8">
-              
-              {/* Subject Categorized Grids (100% Dynamically Detected categories!) */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                    Syllabus Subject Modules (विषय मॉड्यूल)
-                  </h3>
-                  <span className="text-xs text-slate-400">Select any subject to practice</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {activeCategories.length === 0 ? (
-                    <div className="col-span-1 sm:col-span-2 glass rounded-3xl p-8 text-center border border-dashed border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-xl"></div>
-                      <BookOpenIcon size={44} className="mx-auto text-indigo-400/60 mb-3 animate-float" />
-                      <h4 className="text-base font-bold text-white mb-2">डेटाबेस खाली है (Database is Empty)</h4>
-                      <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                        कम्प्यूटर अनुदेशक के लिए अभी तक कोई प्रश्न लोड नहीं किया गया है। प्रश्न जोड़ने के लिए ऊपर <strong>Add Question</strong> बटन पर क्लिक करें और AI से जनरेटेड JSON इनपुट करें!
-                      </p>
-                    </div>
-                  ) : (
-                    activeCategories.map((cat, idx) => {
-                      const catStat = dashboardStats.categoryStats[cat] || { questionCount: 0, solvedCount: 0, accuracy: 0 };
-                      
-                      // Dynamic gradient styling borders based on card indices
-                      const borderGlows = [
-                        "hover:border-indigo-500/30",
-                        "hover:border-purple-500/30",
-                        "hover:border-emerald-500/30",
-                        "hover:border-amber-500/30",
-                        "hover:border-rose-500/30",
-                        "hover:border-cyan-500/30"
-                      ];
-                      const borderGlow = borderGlows[idx % borderGlows.length];
-
-                      return (
-                        <div 
-                          key={cat}
-                          className={`glass rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group flex flex-col justify-between border border-white/5 ${borderGlow}`}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest bg-indigo-500/5 border border-indigo-500/10 px-2 py-0.5 rounded-md">
-                                Dynamic Category
-                              </span>
-                              <span className="text-xs text-slate-400 font-medium">
-                                {catStat.questionCount} Questions
-                              </span>
-                            </div>
-                            
-                            <h4 className="text-sm font-bold text-white mt-3 group-hover:text-indigo-300 transition-colors">
-                              {cat}
-                            </h4>
-                            
-                            {/* Accuracy Tracker if attempted */}
-                            {catStat.solvedCount > 0 && (
-                              <div className="mt-3 space-y-1">
-                                <div className="flex items-center justify-between text-[10px] text-slate-400">
-                                  <span>Subject Accuracy</span>
-                                  <span className="font-semibold text-emerald-400">{catStat.accuracy}%</span>
-                                </div>
-                                <div className="w-full bg-slate-800 rounded-full h-1">
-                                  <div 
-                                    className="bg-emerald-400 h-1 rounded-full"
-                                    style={{ width: `${catStat.accuracy}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2 mt-6">
-                            <button
-                              onClick={() => startPractice(cat)}
-                              className="flex-1 rounded-full bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold py-2 px-3 border border-white/5 transition-all cursor-pointer text-slate-300 text-center"
-                            >
-                              Study Deck
-                            </button>
-                            <button
-                              onClick={() => transitionToInstructions(cat)}
-                              className="rounded-full bg-indigo-600/20 hover:bg-indigo-600 text-indigo-200 hover:text-white text-xs font-semibold p-2 border border-indigo-500/20 transition-all cursor-pointer flex items-center justify-center"
-                              title="Start Mock Exam"
-                            >
-                              <TimerIcon size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Sidebar Recent Attempts */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <ClockIcon size={18} className="text-indigo-400" />
-                  Recent Mock Logs (हाल के प्रयास)
-                </h3>
-
-                {dashboardStats.recentAttempts.length === 0 ? (
-                  <div className="glass rounded-3xl p-8 text-center text-slate-500 border border-dashed border-white/10">
-                    <TrophyIcon size={40} className="mx-auto text-slate-600 mb-3" />
-                    <p className="text-sm font-medium">No tests simulated yet</p>
-                    <p className="text-xs text-slate-600 mt-1">
-                      Start a mock simulator test to log your scores.
+            {/* 1. STATE A: NO ACTIVE QUIZ SELECTED -> SHOW QUIZ CATALOG */}
+            {!activeQuizName ? (
+              <div className="space-y-8">
+                {/* Header Hero Banner for Catalog */}
+                <div className="glass-premium rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                  
+                  <div className="space-y-3 max-w-2xl text-center md:text-left">
+                    <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 text-xs font-semibold tracking-wider text-indigo-300 uppercase">
+                      Rajasthan, DSSSB & KVS Computer Instructor Syllabus
+                    </span>
+                    <h2 className="text-3xl font-extrabold md:text-4xl text-white tracking-tight leading-tight">
+                      कम्प्यूटर अनुदेशक <br className="hidden sm:inline" /> 
+                      <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent">
+                        CBT परीक्षा तैयारी पोर्टल
+                      </span>
+                    </h2>
+                    <p className="text-sm text-slate-300 max-w-xl">
+                      अपने कंप्यूटर शिक्षक परीक्षा की तैयारी के लिए क्विज पेपर चुनें। प्रत्येक क्विज पूर्ण रूप से अलग और स्वतंत्र है।
                     </p>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {dashboardStats.recentAttempts.map((attempt) => {
-                      const isGood = attempt.score >= 70;
-                      return (
-                        <div 
-                          key={attempt.id}
-                          className="glass rounded-2xl p-4 flex items-center justify-between border-l-2 hover:border-white/20 transition-colors"
-                          style={{ borderLeftColor: isGood ? "#10b981" : "#f43f5e" }}
-                        >
-                          <div className="space-y-1">
-                            <p className="text-xs font-semibold text-white truncate max-w-[180px]">
-                              {attempt.category}
-                            </p>
-                            <p className="text-[10px] text-slate-400">
-                              {formatDate(attempt.timestamp)} • {attempt.timeSpentSeconds > 0 ? `${Math.round(attempt.timeSpentSeconds / 60)}m spent` : "Practice Mode"}
-                            </p>
-                          </div>
 
-                          <div className="text-right">
-                            <span className={`text-base font-bold ${isGood ? "text-emerald-400" : "text-rose-400"}`}>
-                              {attempt.score}%
-                            </span>
-                            <p className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold">
-                              {attempt.correctAnswersCount}/{attempt.totalQuestions} Right
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <button
+                      onClick={() => setShowAdminPanel(!showAdminPanel)}
+                      className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-sm font-semibold py-3 px-6 transition-all flex items-center justify-center gap-2 text-white cursor-pointer shadow-lg shadow-indigo-500/25"
+                    >
+                      <PlusIcon size={18} />
+                      <span>{showAdminPanel ? "Close Admin Console" : "Add / Paste New Quiz Paper"}</span>
+                    </button>
                   </div>
-                )}
-              </div>
+                </div>
 
-            </div>
+                {/* Quizzes List (Catalog Grid) */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-extrabold flex items-center gap-2 text-white">
+                      <span className="h-3 w-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 animate-pulse"></span>
+                      Available CBT Exam Papers (उपलब्ध परीक्षा प्रश्न पत्र)
+                    </h3>
+                    <span className="text-xs text-slate-400 font-medium">Click any paper to enter its independent preparation room</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {quizzes.length === 0 ? (
+                      <div className="col-span-full glass-premium rounded-3xl p-12 text-center border border-dashed border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-xl"></div>
+                        <BookOpenIcon size={48} className="mx-auto text-indigo-400/60 mb-4 animate-float" />
+                        <h4 className="text-lg font-bold text-white mb-2">डेटाबेस खाली है (Database is Empty)</h4>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                          कोई परीक्षा पत्र लोड नहीं किया गया है। ऊपर <strong>Add / Paste New Quiz Paper</strong> बटन पर क्लिक करें और AI से जनरेटेड JSON इनपुट करें!
+                        </p>
+                      </div>
+                    ) : (
+                      quizzes.map((quiz, idx) => {
+                        const borderColors = [
+                          "from-indigo-500/10 via-slate-900 to-purple-500/10 hover:border-indigo-500/30",
+                          "from-purple-500/10 via-slate-900 to-rose-500/10 hover:border-purple-500/30",
+                          "from-emerald-500/10 via-slate-900 to-teal-500/10 hover:border-emerald-500/30",
+                          "from-cyan-500/10 via-slate-900 to-blue-500/10 hover:border-cyan-500/30"
+                        ];
+                        const borderActive = borderColors[idx % borderColors.length];
+
+                        return (
+                          <div 
+                            key={quiz.name}
+                            className={`glass-premium rounded-3xl p-6 border border-white/5 hover:border-white/10 transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-gradient-to-br ${borderActive} shadow-lg`}
+                          >
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <span className="rounded-full bg-indigo-500/10 border border-indigo-500/25 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-indigo-300 uppercase">
+                                  📝 MOCK EXAM PAPER
+                                </span>
+                                <span className="text-xs text-slate-400 font-bold bg-slate-950/60 px-2.5 py-1 rounded-lg border border-white/5">
+                                  {quiz.questions.length} Questions
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-base font-extrabold text-white tracking-tight leading-snug line-clamp-2">
+                                  {quiz.name}
+                                </h4>
+                                <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                  Contains: {Object.keys(quiz.categoryCounts).join(", ")}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/5">
+                              <button
+                                onClick={() => {
+                                  setActiveQuizName(quiz.name);
+                                  setSelectedQuizName(quiz.name);
+                                }}
+                                className="w-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-xs font-bold py-3 text-center text-white transition-all cursor-pointer shadow-md shadow-indigo-600/15"
+                              >
+                                Enter Exam Hub (प्रवेश करें)
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* 2. STATE B: AN ACTIVE QUIZ SELECTED -> SHOW QUIZ DASHBOARD HUB */
+              <div className="space-y-8">
+                
+                {/* Back Link Header */}
+                <div className="flex items-center justify-between">
+                  <button 
+                    onClick={() => {
+                      setActiveQuizName(null);
+                      setSelectedQuizName("All Quizzes");
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ChevronLeftIcon size={16} />
+                    <span>Back to Quiz Papers Catalog</span>
+                  </button>
+
+                  <span className="text-xs font-bold text-slate-400 bg-indigo-950/40 border border-indigo-500/20 px-3 py-1 rounded-full">
+                    Active Exam Hub: {activeQuizName}
+                  </span>
+                </div>
+
+                {/* Header Hero Banner for Active Quiz */}
+                <div className="glass-premium rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                  
+                  <div className="space-y-3 max-w-2xl text-center md:text-left">
+                    <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 text-xs font-semibold tracking-wider text-indigo-300 uppercase">
+                      Rajasthan, DSSSB & KVS Computer Instructor Syllabus
+                    </span>
+                    <h2 className="text-2xl font-extrabold md:text-3xl text-white tracking-tight leading-tight">
+                      {activeQuizName}
+                    </h2>
+                    <p className="text-xs text-slate-300 max-w-xl">
+                      इस परीक्षा पत्र का सम्पूर्ण मॉक टेस्ट शुरू करें या व्यक्तिगत विषयों का अभ्यास करें। आपके आंकड़े केवल इसी पेपर से संबंधित हैं।
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <button
+                      onClick={() => startPractice("All Subjects")}
+                      className="rounded-full bg-slate-800 hover:bg-slate-700 text-sm font-semibold py-3 px-6 border border-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/30 text-white"
+                    >
+                      <BookOpenIcon size={18} className="text-indigo-400" />
+                      <span>Start Full Practice</span>
+                    </button>
+                    <button
+                      onClick={() => transitionToInstructions("All Subjects")}
+                      className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-sm font-semibold py-3 px-6 transition-all flex items-center justify-center gap-2 text-white cursor-pointer shadow-lg shadow-indigo-500/25"
+                    >
+                      <TimerIcon size={18} />
+                      <span>Launch CBT Simulation</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Statistics Dashboard Segmented */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <BookOpenIcon size={48} className="text-indigo-400" />
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Quiz Questions</p>
+                    <p className="text-3xl font-extrabold mt-2 text-white">{dashboardStats.totalQuestions}</p>
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-indigo-400">
+                      <span>Dynamic paper database active</span>
+                    </div>
+                  </div>
+
+                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <TrophyIcon size={48} className="text-purple-400" />
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Paper Simulations</p>
+                    <p className="text-3xl font-extrabold mt-2 text-white">{dashboardStats.totalAttempts}</p>
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-purple-400">
+                      <span>Attempts logged dynamically</span>
+                    </div>
+                  </div>
+
+                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <ChartIcon size={48} className="text-emerald-400" />
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Paper Accuracy</p>
+                    <div className="flex items-baseline gap-2 mt-2">
+                      <p className="text-3xl font-extrabold text-white">{dashboardStats.averageAccuracy}%</p>
+                    </div>
+                    <div className="mt-3 w-full bg-slate-800 rounded-full h-1.5">
+                      <div 
+                        className="bg-emerald-400 h-1.5 rounded-full transition-all duration-500" 
+                        style={{ width: `${dashboardStats.averageAccuracy}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-amber-500/30 transition-all">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <TimerIcon size={48} className="text-amber-400" />
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Paper Progress</p>
+                    <p className="text-3xl font-extrabold mt-2 text-white">
+                      {Math.min(100, Math.round((dashboardStats.totalQuestions / 40) * 100))}%
+                    </p>
+                    <div className="mt-3 flex items-center gap-1 text-xs text-slate-400">
+                      <span>Goal: 40+ Core Questions</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Content Grid: Categories & History segmented */}
+                <div className="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-8">
+                  
+                  {/* Subject Module List */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold flex items-center gap-2 text-white">
+                        <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                        Syllabus Subject Modules (विषय मॉड्यूल)
+                      </h3>
+                      <span className="text-xs text-slate-400">Select subject to study in this paper</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {Object.keys(dashboardStats.categoryStats).length === 0 ? (
+                        <div className="col-span-full glass rounded-3xl p-8 text-center text-slate-400 border border-dashed border-white/10">
+                          No categories detected inside this paper.
+                        </div>
+                      ) : (
+                        Object.entries(dashboardStats.categoryStats).map(([catName, catStat], idx) => {
+                          const borderGlows = [
+                            "hover:border-indigo-500/30",
+                            "hover:border-purple-500/30",
+                            "hover:border-emerald-500/30",
+                            "hover:border-amber-500/30"
+                          ];
+                          const borderGlow = borderGlows[idx % borderGlows.length];
+
+                          return (
+                            <div 
+                              key={catName}
+                              className={`glass rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group flex flex-col justify-between border border-white/5 ${borderGlow}`}
+                            >
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest bg-indigo-500/5 border border-indigo-500/10 px-2 py-0.5 rounded-md">
+                                    Subject Module
+                                  </span>
+                                  <span className="text-xs text-slate-400 font-medium">
+                                    {catStat.questionCount} Questions
+                                  </span>
+                                </div>
+                                
+                                <h4 className="text-sm font-bold text-white mt-3 group-hover:text-indigo-300 transition-colors">
+                                  {catName}
+                                </h4>
+                                
+                                {catStat.solvedCount > 0 && (
+                                  <div className="mt-3 space-y-1">
+                                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                                      <span>Subject Accuracy</span>
+                                      <span className="font-semibold text-emerald-400">{catStat.accuracy}%</span>
+                                    </div>
+                                    <div className="w-full bg-slate-800 rounded-full h-1">
+                                      <div 
+                                        className="bg-emerald-400 h-1 rounded-full"
+                                        style={{ width: `${catStat.accuracy}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2 mt-6">
+                                <button
+                                  onClick={() => startPractice(catName)}
+                                  className="flex-1 rounded-full bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold py-2 px-3 border border-white/5 transition-all cursor-pointer text-slate-300 text-center"
+                                >
+                                  Study Subject
+                                </button>
+                                <button
+                                  onClick={() => transitionToInstructions(catName)}
+                                  className="rounded-full bg-indigo-600/20 hover:bg-indigo-600 text-indigo-200 hover:text-white text-xs font-semibold p-2 border border-indigo-500/20 transition-all cursor-pointer flex items-center justify-center"
+                                  title="Start Mock Exam"
+                                >
+                                  <TimerIcon size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Sidebar Attempts for Active Quiz */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-white">
+                      <ClockIcon size={18} className="text-indigo-400" />
+                      Paper Mock Logs (हाल के प्रयास)
+                    </h3>
+
+                    {dashboardStats.recentAttempts.length === 0 ? (
+                      <div className="glass rounded-3xl p-8 text-center text-slate-500 border border-dashed border-white/10">
+                        <TrophyIcon size={40} className="mx-auto text-slate-600 mb-3" />
+                        <p className="text-sm font-medium">No attempts logged for this paper</p>
+                        <p className="text-xs text-slate-600 mt-1">
+                          Simulate CBT mock tests to track scores.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {dashboardStats.recentAttempts.map((attempt) => {
+                          const isGood = attempt.score >= 70;
+                          return (
+                            <div 
+                              key={attempt.id}
+                              className="glass rounded-2xl p-4 flex items-center justify-between border-l-2 hover:border-white/20 transition-colors"
+                              style={{ borderLeftColor: isGood ? "#10b981" : "#f43f5e" }}
+                            >
+                              <div className="space-y-1">
+                                <p className="text-xs font-bold text-white uppercase tracking-wider">{attempt.category}</p>
+                                <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                  <ClockIcon size={10} />
+                                  <span>{formatDate(attempt.timestamp)}</span>
+                                </p>
+                              </div>
+
+                              <div className="text-right">
+                                <p className="text-sm font-extrabold text-white">{attempt.score}%</p>
+                                <p className="text-[9px] text-slate-400">
+                                  {attempt.correctAnswersCount}/{attempt.totalQuestions} Right
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+              </div>
+            )}
 
             {/* Active Question Library Section */}
             <div className="pt-8 border-t border-white/5 space-y-4">
@@ -1602,22 +1883,46 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                 </div>
 
-                {/* Default Language Selector Form */}
-                <div className="pt-4 border-t border-white/5 space-y-2">
-                  <label className="block text-xs font-bold text-indigo-300 uppercase tracking-wider">
-                    Choose Your Default Exam Viewing Language (परीक्षा की भाषा चुनें):
-                  </label>
-                  <select
-                    value={examLanguage}
-                    onChange={(e) => setExamLanguage(e.target.value as any)}
-                    className="w-full sm:w-64 rounded-xl p-3 text-xs bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
-                  >
-                    <option value="dual">Bilingual (Hindi + English दोनों)</option>
-                    <option value="english">Strictly English (केवल अंग्रेजी)</option>
-                    <option value="hindi">Strictly Hindi (केवल हिंदी)</option>
-                  </select>
-                  <p className="text-[10px] text-slate-500">Note: You can read the questions in your chosen language during the simulator.</p>
+                {/* Default Language & Length Selector Forms */}
+                <div className="pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  
+                  {/* Language Selector */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                      Exam Viewing Language (परीक्षा की भाषा):
+                    </label>
+                    <select
+                      value={examLanguage}
+                      onChange={(e) => setExamLanguage(e.target.value as any)}
+                      className="w-full rounded-xl p-3 text-xs bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value="dual">Bilingual (Hindi + English दोनों)</option>
+                      <option value="english">Strictly English (केवल अंग्रेजी)</option>
+                      <option value="hindi">Strictly Hindi (केवल हिंदी)</option>
+                    </select>
+                  </div>
+
+                  {/* Question Count Selector */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                      Number of Questions (प्रश्नों की संख्या):
+                    </label>
+                    <select
+                      value={mockQuestionLimit}
+                      onChange={(e) => setMockQuestionLimit(Number(e.target.value))}
+                      className="w-full rounded-xl p-3 text-xs bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value={10}>10 Questions</option>
+                      <option value={15}>15 Questions (Default)</option>
+                      <option value={20}>20 Questions</option>
+                      <option value={30}>30 Questions</option>
+                      <option value={50}>50 Questions</option>
+                      <option value={-1}>All Available Questions</option>
+                    </select>
+                  </div>
+
                 </div>
+                <p className="text-[10px] text-slate-500">💡 Note: The simulator will completely mix up and shuffle the questions across all selected subjects for an authentic high-pressure exam feel!</p>
 
               </div>
 

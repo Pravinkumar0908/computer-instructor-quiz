@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     // Basic validation
-    const { score, totalQuestions, timeSpentSeconds, category, correctAnswersCount } = body;
+    const { score, totalQuestions, timeSpentSeconds, category, correctAnswersCount, quizName } = body;
     if (
       typeof score !== "number" || 
       typeof totalQuestions !== "number" || 
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       timeSpentSeconds,
       category,
       correctAnswersCount,
+      quizName: quizName || ""
     };
 
     await addAttempt(payload);

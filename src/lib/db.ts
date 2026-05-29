@@ -9,6 +9,7 @@ export interface Question {
   category: string;
   difficulty: "Easy" | "Medium" | "Hard";
   explanation?: string;
+  quizName?: string;
 }
 
 export interface Attempt {
@@ -19,6 +20,7 @@ export interface Attempt {
   timeSpentSeconds: number;
   category: string; // "All" or specific subject
   correctAnswersCount: number;
+  quizName?: string;
 }
 
 const QUESTIONS_FILE = path.join(process.cwd(), "src/data/db_questions.json");

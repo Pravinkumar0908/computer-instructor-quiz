@@ -684,5 +684,755 @@
     "category": "वेशभूषा",
     "difficulty": "Medium",
     "explanation": "पगड़ी राजस्थान में सम्मान और प्रतिष्ठा का प्रतीक है।"
+  },
+  {
+    "id": "q_1780043666602_0_h4vxo",
+    "question": "'भंवरा' नामक नाक का आभूषण परंपरागत रूप से किस वर्ग की महिलाओं से संबंधित माना जाता है?",
+    "options": [
+      "अविवाहित महिला",
+      "विवाहित महिला",
+      "विधवा महिला",
+      "आदिवासी बालिका"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Bhanwara is traditionally associated with widowed women. Hindi: भंवरा नाक का आभूषण परंपरागत रूप से विधवा महिलाओं से संबंधित माना जाता है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_1_m9nu7",
+    "question": "'रखन' का संबंध राजस्थान की किस आभूषण परंपरा से है?",
+    "options": [
+      "नाक में मोती जड़ना",
+      "दांतों में स्वर्ण प्लेट लगाना",
+      "कान में छल्ला पहनना",
+      "गले में ताबीज पहनना"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Rakhan refers to fixing a gold plate in teeth. Hindi: रखन दांतों में स्वर्ण प्लेट लगाने की परंपरा से जुड़ा है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_2_o7rej",
+    "question": "निम्न में से कौन सिर एवं मस्तक का आभूषण नहीं है?",
+    "options": [
+      "गोफण",
+      "सांकली",
+      "कर्णफूल",
+      "टिड्डी भलको"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Karnphool is an ear ornament. Hindi: कर्णफूल कान का आभूषण है, सिर का नहीं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_3_wrvia",
+    "question": "'पीपल पत्र' किस श्रेणी का आभूषण है?",
+    "options": [
+      "नाक",
+      "कान",
+      "गला",
+      "कमर"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Peepal Patra belongs to ear ornaments. Hindi: पीपल पत्र कान के आभूषणों में गिना जाता है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_4_wgass",
+    "question": "'चोप' की परंपरा में क्या किया जाता है?",
+    "options": [
+      "नाक छिदवाना",
+      "कान फैलाना",
+      "दांतों में छेद कर कील जड़ना",
+      "भुजा पर कड़ा पहनना"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Chop involves inserting a pin in a drilled tooth. Hindi: चोप में दांतों में छोटा छेद कर कील जड़ी जाती है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_5_ca9cq",
+    "question": "खंगवाली का संबंध किस आभूषण से माना जाता है?",
+    "options": [
+      "हंसली",
+      "नथ",
+      "पाजेब",
+      "बोरला"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Khangwali is another name associated with Hansli. Hindi: खंगवाली का संबंध हंसली से माना जाता है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_6_c8d32",
+    "question": "निम्न में से कौन गले का आभूषण है?",
+    "options": [
+      "तिमणियां",
+      "लौंग",
+      "सेला",
+      "गोखरू"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Timaniyan is a neck ornament. Hindi: तिमणियां गले का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_7_rwmp9",
+    "question": "'कणकती' किस अंग का आभूषण है?",
+    "options": [
+      "कमर",
+      "गला",
+      "हाथ",
+      "नाक"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Kankati is worn around the waist. Hindi: कणकती कमर का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_8_fxp9r",
+    "question": "'बिछिया' किस स्थान पर धारण की जाती है?",
+    "options": [
+      "हाथ की उंगली",
+      "पैर की उंगली",
+      "नाक",
+      "कान"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Bichhiya is worn on toes. Hindi: बिछिया पैर की उंगलियों में पहनी जाती है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_9_sdvv7",
+    "question": "पुरुषों के कानों के आभूषणों में कौन सम्मिलित है?",
+    "options": [
+      "लौंग",
+      "साले",
+      "छेलकड़ी",
+      "दोनों B और C"
+    ],
+    "answerIndex": 3,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Sale and Chelkadi are men's ear ornaments. Hindi: साले एवं छेलकड़ी पुरुषों के कानों के आभूषण हैं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_10_2jvb7",
+    "question": "हुलसली बच्चों के किस अंग का आभूषण है?",
+    "options": [
+      "गला",
+      "पैर",
+      "कान",
+      "कमर"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Hulsali is a neck ornament for children. Hindi: हुलसली बच्चों के गले का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_11_iy935",
+    "question": "कुड़ला बच्चों के किस अंग का आभूषण है?",
+    "options": [
+      "गला",
+      "हाथ",
+      "कान",
+      "पैर"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Kudla is worn in the ears. Hindi: कुड़ला बच्चों के कान का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_12_u71g7",
+    "question": "'खिड़की पगड़ी' किस क्षेत्र से संबंधित मानी जाती है?",
+    "options": [
+      "जयपुर",
+      "उदयपुर",
+      "जोधपुर",
+      "बीकानेर"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Khidki Pagdi is associated with Jodhpur. Hindi: खिड़की पगड़ी जोधपुर की प्रसिद्ध पगड़ी है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_13_kaw44",
+    "question": "लहरिया पगड़ी का विशेष संबंध किस मास से है?",
+    "options": [
+      "फाल्गुन",
+      "श्रावण",
+      "कार्तिक",
+      "चैत्र"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Leheriya is especially popular in Shravan. Hindi: लहरिया का विशेष महत्व श्रावण मास में है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_14_i7nqj",
+    "question": "मोठड़े की पगड़ी सामान्यतः किस अवसर पर पहनी जाती है?",
+    "options": [
+      "तीज",
+      "विवाह",
+      "होली",
+      "गणगौर"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Mothda Pagdi is associated with marriage ceremonies. Hindi: मोठड़े की पगड़ी विवाह अवसर पर पहनी जाती है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_15_b6tma",
+    "question": "फूल-पत्ती की छपाई वाली पगड़ी किस पर्व से संबंधित है?",
+    "options": [
+      "दीपावली",
+      "होली",
+      "तीज",
+      "दशहरा"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Floral printed turbans are associated with Holi. Hindi: फूल-पत्ती की छपाई वाली पगड़ी होली से जुड़ी है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_16_h9c4k",
+    "question": "'साफा' किसका पर्याय माना जाता है?",
+    "options": [
+      "धोती",
+      "पगड़ी",
+      "घाघरा",
+      "ओढ़नी"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Safa is another term for turban. Hindi: साफा पगड़ी का पर्याय है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_17_z7qxv",
+    "question": "पोमचा क्या है?",
+    "options": [
+      "विशेष ओढ़नी",
+      "कमरबंध",
+      "नाक का आभूषण",
+      "बालों का आभूषण"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Pomcha is a traditional odhani. Hindi: पोमचा एक पारंपरिक ओढ़नी है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_18_shpzs",
+    "question": "पीली पोटिया किस अवसर से संबंधित है?",
+    "options": [
+      "पुत्र जन्म",
+      "पुत्री जन्म",
+      "विवाह",
+      "होली"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Yellow Potiya is associated with birth of a son. Hindi: पीली पोटिया पुत्र जन्म से संबंधित है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_19_a7xbi",
+    "question": "गुलाबी पोटिया किस अवसर से संबंधित है?",
+    "options": [
+      "विवाह",
+      "पुत्री जन्म",
+      "तीज",
+      "गणगौर"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Pink Potiya is linked to birth of a daughter. Hindi: गुलाबी पोटिया पुत्री जन्म से संबंधित है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_20_nmf03",
+    "question": "तिलका किस समुदाय की महिलाओं द्वारा पहना जाता है?",
+    "options": [
+      "राजपूत",
+      "भील",
+      "मुस्लिम",
+      "गरासिया"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Tilka is associated with Muslim women. Hindi: तिलका मुस्लिम स्त्रियों की वेशभूषा का भाग है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_21_oqbfn",
+    "question": "नांठणा/नागड़ा किस वर्ग की प्रमुख वेशभूषा है?",
+    "options": [
+      "राजपूत",
+      "आदिवासी",
+      "ब्राह्मण",
+      "जाट"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Nanthna/Nagda belongs to tribal attire. Hindi: नांठणा/नागड़ा आदिवासियों की प्रमुख वेशभूषा है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_22_kkhyb",
+    "question": "जामसाई साड़ी किस अवसर पर पहनी जाती है?",
+    "options": [
+      "होली",
+      "विवाह",
+      "तीज",
+      "दीपावली"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Jamsai sari is worn during marriages. Hindi: जामसाई साड़ी विवाह अवसर पर पहनी जाती है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_23_glph5",
+    "question": "फेड़ी/फेरड़ी की प्रमुख विशेषता क्या है?",
+    "options": [
+      "गोलाकार आकृति",
+      "चतुर्भुज में तारे",
+      "त्रिकोणीय डिजाइन",
+      "सर्पाकार डिजाइन"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Ferdi contains star patterns in quadrangular shapes. Hindi: फेड़ी में चतुर्भुज आकृति में तारे बने होते हैं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_24_l3zv7",
+    "question": "'परिजनो' क्या है?",
+    "options": [
+      "गले का आभूषण",
+      "कान का आभूषण",
+      "पीतल के पैरों के कड़े",
+      "नाक का आभूषण"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Parijano are brass anklets worn on feet. Hindi: परिजनो महिलाओं के पैरों में पहने जाने वाले पीतल के कड़े हैं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_25_11mfz",
+    "question": "राजस्थानी लहरिया का प्रमुख केंद्र कौन माना जाता है?",
+    "options": [
+      "कोटा",
+      "जयपुर",
+      "जोधपुर",
+      "बाड़मेर"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Jaipur is famous for Rajasthani Leheriya. Hindi: राजस्थानी लहरिया के लिए जयपुर प्रसिद्ध है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_26_ug6k6",
+    "question": "समुद्र लहरिया में सामान्यतः कितने रंग प्रयुक्त बताए गए हैं?",
+    "options": [
+      "3",
+      "5",
+      "7",
+      "9"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Samudra Leheriya is known for seven-color patterns. Hindi: समुद्र लहरिया 7 रंगों के लिए प्रसिद्ध है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_27_0hee7",
+    "question": "कुर्ती एवं कांचली किसकी वेशभूषा का अंग हैं?",
+    "options": [
+      "पुरुष",
+      "महिलाएं",
+      "बच्चे",
+      "साधु"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Kurti and Kanchli are women's garments. Hindi: कुर्ती और कांचली महिलाओं की वेशभूषा का भाग हैं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_28_lotse",
+    "question": "अंगरखी का दूसरा नाम क्या बताया गया है?",
+    "options": [
+      "तस्मुख",
+      "गावर",
+      "बुगतरी",
+      "उपरोक्त सभी"
+    ],
+    "answerIndex": 3,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Angrakhi has several regional names including Tasmukh, Gawar and Bugtari. Hindi: अंगरखी के कई अन्य नाम बताए गए हैं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_29_nffm4",
+    "question": "कमर का आभूषण 'सकला' किस श्रेणी में आता है?",
+    "options": [
+      "हाथ",
+      "कमर",
+      "गला",
+      "पैर"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Sakla is a waist ornament. Hindi: सकला कमर का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_30_nkkca",
+    "question": "गोखरू किस अंग का आभूषण है?",
+    "options": [
+      "हाथ",
+      "पैर",
+      "गला",
+      "नाक"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Gokhru is worn on feet. Hindi: गोखरू पैरों का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_31_ylgyq",
+    "question": "नेवरी किस अंग का आभूषण है?",
+    "options": [
+      "पैर",
+      "हाथ",
+      "गला",
+      "नाक"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Nevari belongs to foot ornaments. Hindi: नेवरी पैरों के आभूषणों में शामिल है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_32_c5qyv",
+    "question": "'मुगतमाला' का दूसरा नाम क्या दिया गया है?",
+    "options": [
+      "सुरमली",
+      "सुमरनी",
+      "हंसली",
+      "पोत"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Mugtamala is also called Sumarni. Hindi: मुगतमाला को सुमरनी भी कहा जाता है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_33_y81nk",
+    "question": "'खुंगाली' का संबंध किससे है?",
+    "options": [
+      "हंसली",
+      "टोंसली",
+      "नथ",
+      "कड़ा"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Khungali is related to Tonsali. Hindi: खुंगाली को टोंसली से संबंधित माना गया है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_34_ckjm3",
+    "question": "पुरुषों के गले के आभूषणों में कौन सम्मिलित है?",
+    "options": [
+      "चेत",
+      "पेंचल",
+      "रामनामी",
+      "दोनों A और B"
+    ],
+    "answerIndex": 3,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Chet and Penchal are men's neck ornaments. Hindi: चेत और पेंचल पुरुषों के गले के आभूषण हैं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_35_lxxoi",
+    "question": "'आतमसुख' किस प्रकार का वस्त्र माना गया है?",
+    "options": [
+      "मध्यम सर्दी",
+      "कम सर्दी",
+      "अधिक सर्दी",
+      "ग्रीष्मकालीन"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Atamsukh is worn during severe cold. Hindi: आतमसुख ज्यादा सर्दी में पहना जाता है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_36_6dcl8",
+    "question": "'पछेवड़ा' किस ऋतु से संबंधित वस्त्र है?",
+    "options": [
+      "वर्षा",
+      "ग्रीष्म",
+      "कम सर्दी",
+      "शीत"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Pachewada is used in mild winter. Hindi: पछेवड़ा कम सर्दी का वस्त्र माना जाता है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_37_c4mq0",
+    "question": "'घूघटी' किस प्रकार की सर्दी में उपयोगी मानी गई है?",
+    "options": [
+      "अधिक",
+      "मध्यम",
+      "कम",
+      "नहीं"
+    ],
+    "answerIndex": 1,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Ghughati is used in moderate cold. Hindi: घूघटी मध्यम सर्दी में उपयोगी मानी जाती है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_38_qu7o3",
+    "question": "आदिवासी महिलाओं द्वारा सिर पर ओढ़ा जाने वाला वस्त्र कौन-सा है?",
+    "options": [
+      "ओंगिया",
+      "कली",
+      "ककरी",
+      "तारा"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Kakri is worn on the head by tribal women. Hindi: ककरी आदिवासी महिलाओं द्वारा सिर पर ओढ़ी जाती है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_39_9snn0",
+    "question": "राजस्थानी साड़ी के अन्य नामों में कौन सम्मिलित नहीं है?",
+    "options": [
+      "चोल",
+      "निवोल",
+      "पट",
+      "धोती"
+    ],
+    "answerIndex": 3,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Dhoti is not another name for sari. Hindi: धोती साड़ी का अन्य नाम नहीं है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_40_gw1vw",
+    "question": "'भादरायण' किस श्रेणी का आभूषण है?",
+    "options": [
+      "कान",
+      "गला",
+      "नाक",
+      "हाथ"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Bhadarayan is an ear ornament. Hindi: भादरायण कान का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_41_h5epx",
+    "question": "'बजटी' किस अंग का आभूषण है?",
+    "options": [
+      "कान",
+      "नाक",
+      "गला",
+      "पैर"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Bajti belongs to ear ornaments. Hindi: बजटी कान के आभूषणों में शामिल है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_42_a116d",
+    "question": "'वारी' किस श्रेणी का आभूषण है?",
+    "options": [
+      "नाक",
+      "कान",
+      "गला",
+      "कमर"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Vari is a nose ornament. Hindi: वारी नाक का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_43_3a757",
+    "question": "'चोप' और 'रखन' दोनों का संबंध किस अंग से है?",
+    "options": [
+      "कान",
+      "नाक",
+      "दांत",
+      "गला"
+    ],
+    "answerIndex": 2,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Both are related to dental ornamentation. Hindi: चोप और रखन दोनों दांतों के आभूषण हैं।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_44_gv7s0",
+    "question": "'सेला' किस श्रेणी का आभूषण है?",
+    "options": [
+      "कान",
+      "गला",
+      "पैर",
+      "कमर"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Sela is an ear ornament. Hindi: सेला कान का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_45_hb5mw",
+    "question": "'जनेला' किस अंग का आभूषण है?",
+    "options": [
+      "कान",
+      "नाक",
+      "गला",
+      "हाथ"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Janela belongs to ear ornaments. Hindi: जनेला कान के आभूषणों में शामिल है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_46_bwztq",
+    "question": "'चंपाकली' किस अंग का आभूषण है?",
+    "options": [
+      "गला",
+      "नाक",
+      "कान",
+      "कमर"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Champakali is a neck ornament. Hindi: चंपाकली गले का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_47_7ffuy",
+    "question": "'पोत' किस श्रेणी में गिना जाता है?",
+    "options": [
+      "गले का आभूषण",
+      "नाक का आभूषण",
+      "कान का आभूषण",
+      "कमर का आभूषण"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Pot is listed among neck ornaments. Hindi: पोत गले के आभूषणों में गिना जाता है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_48_tnz8u",
+    "question": "'रामनामी' पुरुषों और महिलाओं दोनों में किस अंग से संबंधित है?",
+    "options": [
+      "गला",
+      "हाथ",
+      "नाक",
+      "कान"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Ramnami is associated with neck ornaments. Hindi: रामनामी गले का आभूषण है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
+  },
+  {
+    "id": "q_1780043666602_49_dgfqg",
+    "question": "'तस्मुख' किस आभूषण/वस्त्र का वैकल्पिक नाम है?",
+    "options": [
+      "अंगरखी",
+      "ओढ़नी",
+      "पगड़ी",
+      "कली"
+    ],
+    "answerIndex": 0,
+    "category": "General Knowledge (GK)",
+    "difficulty": "Hard",
+    "explanation": "English: Tasmukh is another name for Angrakhi. Hindi: तस्मुख अंगरखी का वैकल्पिक नाम है।",
+    "quizName": "Rajasthan Computer Instructor CBT Mock 1"
   }
 ]

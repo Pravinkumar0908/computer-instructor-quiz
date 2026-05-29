@@ -63,7 +63,8 @@ export async function POST(request: Request) {
         answerIndex: q.answerIndex,
         category: q.category || "General Computer Science",
         difficulty: q.difficulty || "Medium",
-        explanation: q.explanation || ""
+        explanation: q.explanation || "",
+        quizName: q.quizName || ""
       });
     }
 
