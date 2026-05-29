@@ -60,6 +60,26 @@ body {
   border-radius: 50% !important; /* Circular for reviews */
 }
 
+.cbt-answered-review {
+  background-color: #8b5cf6 !important; /* Purple background */
+  color: #ffffff !important;
+  border-color: #8b5cf6 !important;
+  border-radius: 50% !important; /* Circular for reviews */
+  position: relative;
+}
+
+.cbt-answered-review::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: 8px;
+  height: 8px;
+  background-color: #22c55e !important; /* Green dot */
+  border: 1px solid #ffffff;
+  border-radius: 50%;
+}
+
 .cbt-unanswered {
   background-color: rgba(239, 68, 68, 0.1) !important; /* Translucent Red */
   color: #f87171 !important;

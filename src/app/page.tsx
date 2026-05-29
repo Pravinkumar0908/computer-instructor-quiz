@@ -432,6 +432,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     const qName = quizName || selectedQuizName;
     if (quizName) {
       setSelectedQuizName(quizName);
+      setActiveQuizName(quizName);
     }
     setSelectedCategory(category);
 
@@ -451,7 +452,19 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     // Shuffling practice questions for mixed/random practice feel
     const randomized = [...filtered].sort(() => 0.5 - Math.random());
 
-    setPracticeQuestions(randomized);
+    // Map 5th option "Not Attempted" on-the-fly if question has only 4 options
+    const processed = randomized.map(q => {
+      const opts = [...q.options];
+      if (opts.length === 4) {
+        opts.push("Question Not Attempted / अनुत्तरित प्रश्न");
+      }
+      return {
+        ...q,
+        options: opts
+      };
+    });
+
+    setPracticeQuestions(processed);
     setPracticeIndex(0);
     setPracticeAnswers(randomized.map(() => null));
     setPracticeSubmitted(false);
@@ -469,14 +482,29 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   const handlePracticeSubmit = async () => {
     setPracticeSubmitted(true);
     let correctCount = 0;
+    let incorrectCount = 0;
+    let optionECount = 0;
+    let blankCount = 0;
+
     practiceQuestions.forEach((q, idx) => {
-      if (practiceAnswers[idx] === q.answerIndex) {
-        correctCount++;
+      const userAns = practiceAnswers[idx];
+      if (userAns === 4) {
+        optionECount++;
+      } else if (userAns !== null) {
+        if (userAns === q.answerIndex) {
+          correctCount++;
+        } else {
+          incorrectCount++;
+        }
+      } else {
+        blankCount++;
+        incorrectCount++; // Rajasthan OMR Rule: Penalty for completely blank answer
       }
     });
 
+    const rawScore = correctCount - (incorrectCount * 0.33);
     const scorePercentage = practiceQuestions.length > 0 
-      ? Math.round((correctCount / practiceQuestions.length) * 100) 
+      ? Math.max(0, Math.round((rawScore / practiceQuestions.length) * 100)) 
       : 0;
 
     setLastAttempt({
@@ -520,6 +548,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     const qName = quizName || selectedQuizName;
     if (quizName) {
       setSelectedQuizName(quizName);
+      setActiveQuizName(quizName);
     }
     setSelectedCategory(category);
 
@@ -562,13 +591,25 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     const limit = mockQuestionLimit === -1 ? randomized.length : Math.min(randomized.length, mockQuestionLimit);
     const sliced = randomized.slice(0, limit);
 
-    setMockQuestions(sliced);
+    // Map 5th option "Not Attempted" on-the-fly if question has only 4 options
+    const processed = sliced.map(q => {
+      const opts = [...q.options];
+      if (opts.length === 4) {
+        opts.push("Question Not Attempted / अनुत्तरित प्रश्न");
+      }
+      return {
+        ...q,
+        options: opts
+      };
+    });
+
+    setMockQuestions(processed);
     setMockIndex(0);
-    setMockAnswers(sliced.map(() => null));
-    setMockMarked(sliced.map(() => false));
-    setMockVisited(sliced.map((_, idx) => idx === 0)); // Initialize unvisited array
+    setMockAnswers(processed.map(() => null));
+    setMockMarked(processed.map(() => false));
+    setMockVisited(processed.map((_, idx) => idx === 0)); // Initialize unvisited array
     
-    const calculatedTime = sliced.length * 60; // 60 seconds per question
+    const calculatedTime = processed.length * 60; // 60 seconds per question
     setMockTimeLeft(calculatedTime);
     setMockInitialTime(calculatedTime);
     setMockActive(true);
@@ -586,7 +627,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   const toggleMockMarkForReview = () => {
     setMockMarked(prev => {
       const copy = [...prev];
-      copy[mockIndex] = !copy[mockIndex];
+      copy[mockIndex] = true;
       return copy;
     });
     // Hops forward dynamically
@@ -596,6 +637,12 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   };
 
   const saveAndNextMock = () => {
+    // Clear marked for review since the candidate explicitly clicked Save & Next
+    setMockMarked(prev => {
+      const copy = [...prev];
+      copy[mockIndex] = false;
+      return copy;
+    });
     // Advance index
     if (mockIndex < mockQuestions.length - 1) {
       setMockIndex(prev => prev + 1);
@@ -608,24 +655,36 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       copy[mockIndex] = null;
       return copy;
     });
+    setMockMarked(prev => {
+      const copy = [...prev];
+      copy[mockIndex] = false;
+      return copy;
+    });
   };
 
   // Submit Mock Exam to Backend
   const handleMockSubmit = async () => {
     setMockActive(false);
     
-    // Evaluate Score incorporating standard 1/3 negative markings
+    // Evaluate Score incorporating Rajasthan 5-option OMR negative markings
     let correctCount = 0;
     let incorrectCount = 0;
+    let optionECount = 0;
+    let blankCount = 0;
 
     mockQuestions.forEach((q, idx) => {
       const userAns = mockAnswers[idx];
-      if (userAns !== null) {
+      if (userAns === 4) {
+        optionECount++;
+      } else if (userAns !== null) {
         if (userAns === q.answerIndex) {
           correctCount++;
         } else {
           incorrectCount++;
         }
+      } else {
+        blankCount++;
+        incorrectCount++; // Rajasthan OMR Rule: Penalty for completely blank answer without bubbled E
       }
     });
 
@@ -1465,21 +1524,85 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                                 <h4 className="text-base font-extrabold text-white tracking-tight leading-snug line-clamp-2">
                                   {quiz.name}
                                 </h4>
-                                <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                                  Contains: {Object.keys(quiz.categoryCounts).join(", ")}
-                                </p>
+                                
+                                {/* Subject pills */}
+                                <div className="flex flex-wrap gap-1 mt-2.5">
+                                  {Object.entries(quiz.categoryCounts).map(([catName, qCount]) => (
+                                    <span key={catName} className="text-[9px] bg-white/5 border border-white/5 text-slate-300 px-2 py-0.5 rounded-md font-medium">
+                                      {catName.split(" ")[0]}: {qCount} Qs
+                                    </span>
+                                  ))}
+                                </div>
+
+                                {/* Difficulties distribution */}
+                                <div className="flex gap-2.5 mt-3 text-[10px] font-bold text-slate-400">
+                                  <span>Difficulties:</span>
+                                  {Array.from(quiz.difficulties).map(diff => {
+                                    let badgeColor = "text-emerald-400";
+                                    if (diff === "Medium") badgeColor = "text-amber-400";
+                                    if (diff === "Hard") badgeColor = "text-rose-400";
+                                    return (
+                                      <span key={diff} className={badgeColor}>
+                                        ● {diff}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Personal attempts report */}
+                                {(() => {
+                                  const quizAttempts = (stats?.recentAttempts || []).filter(
+                                    a => (a.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1") === quiz.name
+                                  );
+                                  const attemptsCount = quizAttempts.length;
+                                  const highestScore = attemptsCount > 0 
+                                    ? Math.max(...quizAttempts.map(a => a.score)) 
+                                    : null;
+                                  const averageScore = attemptsCount > 0
+                                    ? Math.round(quizAttempts.reduce((acc, curr) => acc + curr.score, 0) / attemptsCount)
+                                    : null;
+
+                                  return (
+                                    <div className="mt-4 p-3 rounded-2xl bg-slate-950/40 border border-white/5 flex items-center justify-between text-xs text-slate-300 gap-4">
+                                      <div className="space-y-0.5">
+                                        <p className="text-[8px] text-slate-500 font-semibold uppercase tracking-wider">ATTEMPTS</p>
+                                        <p className="font-extrabold text-white">{attemptsCount} Times</p>
+                                      </div>
+                                      <div className="space-y-0.5 text-right">
+                                        <p className="text-[8px] text-slate-500 font-semibold uppercase tracking-wider">HIGHEST / AVG</p>
+                                        <p className="font-extrabold text-indigo-300">
+                                          {attemptsCount > 0 ? `${highestScore}% / ${averageScore}%` : "Not Attempted"}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/5">
+                            <div className="flex flex-col sm:flex-row gap-2 mt-6 pt-4 border-t border-white/5">
                               <button
                                 onClick={() => {
                                   setActiveQuizName(quiz.name);
                                   setSelectedQuizName(quiz.name);
                                 }}
-                                className="w-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-xs font-bold py-3 text-center text-white transition-all cursor-pointer shadow-md shadow-indigo-600/15"
+                                className="flex-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-[10px] font-bold py-2.5 text-center text-white transition-all cursor-pointer"
                               >
-                                Enter Exam Hub (प्रवेश करें)
+                                Stats Hub
+                              </button>
+                              
+                              <button
+                                onClick={() => startPractice("All Subjects", quiz.name)}
+                                className="flex-1 rounded-full bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-500/20 text-[10px] font-bold py-2.5 text-center text-indigo-300 transition-all cursor-pointer"
+                              >
+                                Practice
+                              </button>
+
+                              <button
+                                onClick={() => transitionToInstructions("All Subjects", quiz.name)}
+                                className="flex-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-[10px] font-bold py-2.5 text-center text-white transition-all cursor-pointer shadow-md shadow-indigo-600/10"
+                              >
+                                CBT Mock
                               </button>
                             </div>
                           </div>
@@ -1850,11 +1973,12 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   </div>
 
                   <div className="space-y-1">
-                    <h4 className="font-bold text-indigo-300">2. Evaluation & Negative Marking (मूल्यांकन और नकारात्मक अंकन):</h4>
+                    <h4 className="font-bold text-indigo-300">2. Evaluation & Negative Marking (मूल्यांकन और 5-विकल्प नकारात्मक अंकन):</h4>
                     <ul className="list-disc list-inside space-y-1 text-slate-400 pl-2">
                       <li>Each correct answer will award <strong className="text-emerald-400">+1.00 mark</strong>.</li>
-                      <li>Each incorrect answer will attract a penalty of <strong className="text-rose-400">-0.33 marks</strong> (1/3 negative marking).</li>
-                      <li>Unanswered/skipped questions will receive <strong className="text-slate-400">0.00 marks</strong>.</li>
+                      <li>Selecting any wrong option (A, B, C, D) attracts <strong className="text-rose-400">-0.33 marks</strong> penalty (1/3 negative).</li>
+                      <li>If you do not want to attempt, you **MUST select Option E (Question Not Attempted / अनुत्तरित प्रश्न)** to receive **0.00 marks** (no penalty).</li>
+                      <li>Rajasthan Board Penalty: Leaving a question **completely blank** (not choosing A, B, C, D, OR E) will attract <strong className="text-rose-400">-0.33 marks</strong> penalty!</li>
                     </ul>
                   </div>
 
@@ -2165,19 +2289,31 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   <div className="grid gap-3 pt-4">
                     {mockQuestions[mockIndex].options.map((option, optIdx) => {
                       const isSelected = mockAnswers[mockIndex] === optIdx;
+                      const isOptionE = optIdx === 4;
+
+                      let btnStyle = "border-white/10 bg-slate-900/40 text-slate-300 hover:border-white/20 hover:bg-slate-900/60";
+                      let numStyle = "bg-white/5 text-slate-400";
+
+                      if (isSelected) {
+                        if (isOptionE) {
+                          btnStyle = "border-purple-500 bg-purple-500/15 text-purple-200 shadow-md shadow-purple-500/5";
+                          numStyle = "bg-purple-500 text-white";
+                        } else {
+                          btnStyle = "border-indigo-500 bg-indigo-500/15 text-indigo-200 shadow-md shadow-indigo-500/5";
+                          numStyle = "bg-indigo-500 text-white";
+                        }
+                      } else if (isOptionE) {
+                        btnStyle = "border-purple-500/25 bg-purple-950/10 text-purple-300 hover:border-purple-500/40 hover:bg-purple-950/20";
+                        numStyle = "bg-purple-950/40 text-purple-300 border border-purple-500/20";
+                      }
+
                       return (
                         <button
                           key={optIdx}
                           onClick={() => selectMockOption(optIdx)}
-                          className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                            isSelected 
-                              ? "border-indigo-500 bg-indigo-500/15 text-indigo-200" 
-                              : "border-white/10 bg-slate-900/40 text-slate-300 hover:border-white/20 hover:bg-slate-900/60"
-                          }`}
+                          className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left text-sm font-semibold transition-all duration-200 cursor-pointer ${btnStyle}`}
                         >
-                          <span className={`h-6 w-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-                            isSelected ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400"
-                          }`}>
+                          <span className={`h-6 w-6 rounded-lg flex items-center justify-center text-xs font-bold ${numStyle}`}>
                             {String.fromCharCode(65 + optIdx)}
                           </span>
                           <span>{filterQuestionText(option, examLanguage)}</span>
@@ -2245,18 +2381,24 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     const isAnswered = mockAnswers[idx] !== null;
                     const isMarked = mockMarked[idx];
                     const isVisited = mockVisited[idx];
-                    
-                    let indicatorClass = "cbt-unvisited";
-                    
-                    if (isCurrent) {
-                      indicatorClass = "border border-indigo-400 bg-indigo-500/20 text-indigo-100 font-extrabold ring-1 ring-indigo-500/30 scale-105 shadow-md shadow-indigo-500/10";
+
+                    let indicatorClass = "";
+
+                    if (isMarked && isAnswered) {
+                      indicatorClass = "cbt-answered-review text-white";
                     } else if (isMarked) {
-                      indicatorClass = "cbt-review";
+                      indicatorClass = "cbt-review text-white";
                     } else if (isAnswered) {
-                      indicatorClass = "cbt-answered";
+                      indicatorClass = "cbt-answered text-white";
                     } else if (isVisited) {
-                      indicatorClass = "cbt-unanswered";
+                      indicatorClass = "cbt-unanswered text-rose-400";
+                    } else {
+                      indicatorClass = "cbt-unvisited text-slate-400";
                     }
+
+                    const borderStyle = isCurrent
+                      ? "ring-2 ring-indigo-400 ring-offset-2 ring-offset-slate-950 scale-110 z-10 shadow-lg shadow-indigo-500/35 border-transparent font-extrabold"
+                      : "border-transparent";
 
                     return (
                       <button
@@ -2265,7 +2407,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                           setMockIndex(idx);
                           setMobileMenuOpen(false);
                         }}
-                        className={`h-10 w-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer relative ${indicatorClass}`}
+                        className={`h-10 w-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer relative rounded border ${indicatorClass} ${borderStyle}`}
                       >
                         <span>{idx + 1}</span>
                       </button>
@@ -2280,7 +2422,19 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <span className="h-6 w-6 flex items-center justify-center cbt-answered text-[10px] font-bold">1</span>
                       <span>Answered (उत्तर दिया)</span>
                     </div>
-                    <span className="font-bold text-white">{mockAnswers.filter(a => a !== null).length}</span>
+                    <span className="font-bold text-white">
+                      {mockQuestions.filter((_, idx) => mockAnswers[idx] !== null && !mockMarked[idx]).length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-6 w-6 flex items-center justify-center cbt-answered-review text-[10px] font-bold">1</span>
+                      <span>Answered & Marked (उत्तर व समीक्षा)</span>
+                    </div>
+                    <span className="font-bold text-white">
+                      {mockQuestions.filter((_, idx) => mockAnswers[idx] !== null && mockMarked[idx]).length}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -2288,7 +2442,9 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <span className="h-6 w-6 flex items-center justify-center cbt-review text-[10px] font-bold">1</span>
                       <span>Marked for Review (समीक्षा)</span>
                     </div>
-                    <span className="font-bold text-white">{mockMarked.filter(m => m).length}</span>
+                    <span className="font-bold text-white">
+                      {mockQuestions.filter((_, idx) => mockAnswers[idx] === null && mockMarked[idx]).length}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -2296,7 +2452,9 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <span className="h-6 w-6 flex items-center justify-center cbt-unanswered text-[10px] font-bold">1</span>
                       <span>Not Answered (बचे हुए)</span>
                     </div>
-                    <span className="font-bold text-white">{mockAnswers.filter((a, idx) => a === null && mockVisited[idx]).length}</span>
+                    <span className="font-bold text-white">
+                      {mockQuestions.filter((_, idx) => mockAnswers[idx] === null && !mockMarked[idx] && mockVisited[idx]).length}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -2339,20 +2497,78 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 </p>
               </div>
 
-              {/* Accuracy Meter Ring displaying exact final mark count incorporating negative markings! */}
-              <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 rounded-3xl border border-white/5 w-40 h-40">
-                <span className={`text-4xl font-extrabold ${lastAttempt.score >= 50 ? "text-emerald-400" : "text-rose-400"}`}>
-                  {lastAttempt.score}%
-                </span>
-                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1.5">Marks Scored</span>
-                <span className="text-xs text-indigo-300 font-bold mt-0.5">
-                  {/* Score = correct - (incorrect * 0.33) */}
-                  {Math.max(0, lastAttempt.correctCount - ((lastAttempt.total - lastAttempt.correctCount - lastAttempt.answers.filter(a => a === null).length) * 0.33)).toFixed(2)} / {lastAttempt.total}.00 Marks
-                </span>
-              </div>
+              {/* Accuracy Meter Ring displaying exact final mark count incorporating Rajasthan 5-option OMR rules */}
+              {(() => {
+                const totalCorrect = lastAttempt.correctCount;
+                const totalOptionE = lastAttempt.answers.filter(a => a === 4).length;
+                const totalBlank = lastAttempt.answers.filter(a => a === null).length;
+                const totalIncorrect = lastAttempt.total - totalCorrect - totalOptionE - totalBlank;
+                const totalPenalized = totalIncorrect + totalBlank;
+                const finalMark = Math.max(0, totalCorrect - (totalPenalized * 0.33));
+
+                return (
+                  <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 rounded-3xl border border-white/5 w-40 h-40">
+                    <span className={`text-4xl font-extrabold ${lastAttempt.score >= 50 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {lastAttempt.score}%
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1.5">Marks Scored</span>
+                    <span className="text-xs text-indigo-300 font-bold mt-0.5">
+                      {finalMark.toFixed(2)} / {lastAttempt.total}.00 Marks
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
 
-            {/* Performance Verdict Cards */}
+            {/* Performance Verdict Cards (4-State OMR Breakdown!) */}
+            {(() => {
+              const totalCorrect = lastAttempt.correctCount;
+              const totalOptionE = lastAttempt.answers.filter(a => a === 4).length;
+              const totalBlank = lastAttempt.answers.filter(a => a === null).length;
+              const totalIncorrect = lastAttempt.total - totalCorrect - totalOptionE - totalBlank;
+
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="glass rounded-2xl p-4 border border-emerald-500/10 bg-emerald-500/5 relative overflow-hidden group hover:border-emerald-500/35 transition-all">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/5 rounded-full blur-lg pointer-events-none"></div>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">🟢 Correct (सही विकल्प)</p>
+                    <h4 className="text-xl font-extrabold text-emerald-400 pt-1">
+                      {totalCorrect} Qs
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">Score weight: +1.00 each</p>
+                  </div>
+
+                  <div className="glass rounded-2xl p-4 border border-rose-500/10 bg-rose-500/5 relative overflow-hidden group hover:border-rose-500/35 transition-all">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/5 rounded-full blur-lg pointer-events-none"></div>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">🔴 Incorrect (गलत विकल्प)</p>
+                    <h4 className="text-xl font-extrabold text-rose-400 pt-1">
+                      {totalIncorrect} Qs
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">Penalty: -0.33 each</p>
+                  </div>
+
+                  <div className="glass rounded-2xl p-4 border border-purple-500/10 bg-purple-500/5 relative overflow-hidden group hover:border-purple-500/35 transition-all">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 rounded-full blur-lg pointer-events-none"></div>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">🟣 Option E (अनुत्तरित)</p>
+                    <h4 className="text-xl font-extrabold text-purple-400 pt-1">
+                      {totalOptionE} Qs
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">Safe Skip: 0.00 marks</p>
+                  </div>
+
+                  <div className="glass rounded-2xl p-4 border border-amber-500/10 bg-amber-500/5 relative overflow-hidden group hover:border-amber-500/35 transition-all">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-lg pointer-events-none"></div>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">⚠️ Blank Bubble (खाली OMR)</p>
+                    <h4 className="text-xl font-extrabold text-amber-500 pt-1">
+                      {totalBlank} Qs
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">OMR Penalty: -0.33 each!</p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Performance Verdict Cards (Qualified Status) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               <div className="glass rounded-2xl p-5 space-y-1">
@@ -2376,7 +2592,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 <h4 className="text-base font-bold text-indigo-300 pt-1">
                   {lastAttempt.timeSpent > 0 ? `${formatTimer(lastAttempt.timeSpent)} minutes` : "Practice Session"}
                 </h4>
-                <p className="text-xs text-slate-500 pt-1">Penalty marking of 0.33 applied to wrong answers.</p>
+                <p className="text-xs text-slate-500 pt-1">Strict Rajasthan Board 5-bubble guidelines active.</p>
               </div>
 
             </div>
@@ -2396,13 +2612,16 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                   let right = 0;
                   let wrong = 0;
-                  let skipped = 0;
+                  let optionE = 0;
+                  let blank = 0;
 
                   lastAttempt.questions.forEach((q, idx) => {
                     if (q.category === cat) {
                       const userAns = lastAttempt.answers[idx];
-                      if (userAns === null) {
-                        skipped++;
+                      if (userAns === 4) {
+                        optionE++;
+                      } else if (userAns === null) {
+                        blank++;
                       } else if (userAns === q.answerIndex) {
                         right++;
                       } else {
@@ -2414,22 +2633,23 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   const totalCat = catQuestions.length;
                   const rightPct = Math.round((right / totalCat) * 100);
                   const wrongPct = Math.round((wrong / totalCat) * 100);
-                  const skippedPct = 100 - rightPct - wrongPct;
+                  const optionEPct = Math.round((optionE / totalCat) * 100);
+                  const blankPct = 100 - rightPct - wrongPct - optionEPct;
 
                   return (
                     <div key={cat} className="space-y-2 text-xs">
                       <div className="flex items-center justify-between font-semibold text-slate-300">
                         <span>{cat}</span>
                         <span className="text-[10px] text-slate-400">
-                          {right} Right • {wrong} Wrong • {skipped} Skipped
+                          {right} Correct • {wrong} Incorrect • {optionE} Option E • {blank} Blank
                         </span>
                       </div>
 
-                      {/* Stacked Progress Bar Grid */}
+                      {/* 4-State OMR Stacked Progress Bar */}
                       <div className="w-full bg-slate-900 rounded-full h-3.5 overflow-hidden flex border border-white/5">
                         {right > 0 && (
                           <div 
-                            className="bg-emerald-500 h-full flex items-center justify-center text-[9px] text-slate-950 font-bold"
+                            className="bg-emerald-500 h-full flex items-center justify-center text-[8px] text-slate-950 font-bold"
                             style={{ width: `${rightPct}%` }}
                             title={`${rightPct}% Correct`}
                           >
@@ -2438,20 +2658,29 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                         )}
                         {wrong > 0 && (
                           <div 
-                            className="bg-rose-500 h-full flex items-center justify-center text-[9px] text-white font-bold"
+                            className="bg-rose-500 h-full flex items-center justify-center text-[8px] text-white font-bold"
                             style={{ width: `${wrongPct}%` }}
                             title={`${wrongPct}% Incorrect`}
                           >
                             {wrongPct}%
                           </div>
                         )}
-                        {skipped > 0 && (
+                        {optionE > 0 && (
                           <div 
-                            className="bg-slate-700 h-full flex items-center justify-center text-[9px] text-slate-300 font-bold"
-                            style={{ width: `${skippedPct}%` }}
-                            title={`${skippedPct}% Skipped`}
+                            className="bg-purple-500 h-full flex items-center justify-center text-[8px] text-white font-bold"
+                            style={{ width: `${optionEPct}%` }}
+                            title={`${optionEPct}% Skipped (Option E)`}
                           >
-                            {skippedPct}%
+                            {optionEPct}%
+                          </div>
+                        )}
+                        {blank > 0 && (
+                          <div 
+                            className="bg-amber-500 h-full flex items-center justify-center text-[8px] text-slate-950 font-bold"
+                            style={{ width: `${blankPct}%` }}
+                            title={`${blankPct}% Blank Bubble`}
+                          >
+                            {blankPct}%
                           </div>
                         )}
                       </div>
@@ -2483,13 +2712,34 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                           Question {idx + 1}
                         </span>
                         
-                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                          isCorrect 
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                            : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                        }`}>
-                          {isCorrect ? "Correct (+1.00)" : selectedIdx === null ? "Skipped (0.00)" : "Incorrect (-0.33)"}
-                        </span>
+                        {(() => {
+                          if (isCorrect) {
+                            return (
+                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                                Correct (+1.00)
+                              </span>
+                            );
+                          }
+                          if (selectedIdx === 4) {
+                            return (
+                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-wider">
+                                Not Attempted (0.00)
+                              </span>
+                            );
+                          }
+                          if (selectedIdx === null) {
+                            return (
+                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+                                Blank OMR Penalty (-0.33)
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-wider">
+                              Incorrect (-0.33)
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       <h4 className="text-base font-bold text-white leading-relaxed">
