@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { getDashboardStats, addAttempt, Attempt } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const stats = await getDashboardStats();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId") || undefined;
+    const stats = await getDashboardStats(userId);
     return NextResponse.json(stats);
   } catch (error) {
     console.error("GET /api/attempts error:", error);
@@ -16,7 +18,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     // Basic validation
-    const { score, totalQuestions, timeSpentSeconds, category, correctAnswersCount, quizName } = body;
+    const { score, totalQuestions, timeSpentSeconds, category, correctAnswersCount, quizName, userId } = body;
     if (
       typeof score !== "number" || 
       typeof totalQuestions !== "number" || 
@@ -33,13 +35,14 @@ export async function POST(request: Request) {
       timeSpentSeconds,
       category,
       correctAnswersCount,
-      quizName: quizName || ""
+      quizName: quizName || "",
+      userId: userId || "",
     };
 
     await addAttempt(payload);
     
     // Return updated dashboard stats immediately for instant client synchronization
-    const updatedStats = await getDashboardStats();
+    const updatedStats = await getDashboardStats(userId);
     return NextResponse.json(updatedStats, { status: 201 });
   } catch (error) {
     console.error("POST /api/attempts error:", error);

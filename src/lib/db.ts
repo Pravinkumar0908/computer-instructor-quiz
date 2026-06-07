@@ -1,5 +1,16 @@
-import fs from "fs/promises";
-import path from "path";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  limit,
+  writeBatch,
+  where,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export interface Question {
   id: string;
@@ -10,6 +21,8 @@ export interface Question {
   difficulty: "Easy" | "Medium" | "Hard";
   explanation?: string;
   quizName?: string;
+  batchId?: string;
+  createdAt?: string;
 }
 
 export interface Attempt {
@@ -18,65 +31,201 @@ export interface Attempt {
   score: number;
   totalQuestions: number;
   timeSpentSeconds: number;
-  category: string; // "All" or specific subject
+  category: string;
   correctAnswersCount: number;
   quizName?: string;
+  userId?: string;
 }
 
-const QUESTIONS_FILE = path.join(process.cwd(), "src/data/db_questions.json");
-const ATTEMPTS_FILE = path.join(process.cwd(), "src/data/db_attempts.json");
-
-// Helper to safely read JSON
-async function readJsonFile<T>(filePath: string, defaultData: T): Promise<T> {
-  try {
-    const content = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(content) as T;
-  } catch (error) {
-    // If file doesn't exist, write default and return
-    try {
-      await fs.writeFile(filePath, JSON.stringify(defaultData, null, 2), "utf-8");
-    } catch (writeErr) {
-      console.error(`Failed to initialize file at ${filePath}`, writeErr);
-    }
-    return defaultData;
-  }
-}
-
-// Helper to safely write JSON
-async function writeJsonFile<T>(filePath: string, data: T): Promise<void> {
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
-}
+// ================== QUESTIONS ==================
 
 export async function getQuestions(): Promise<Question[]> {
-  return readJsonFile<Question[]>(QUESTIONS_FILE, []);
+  const questionsRef = collection(db, "questions");
+  const snapshot = await getDocs(questionsRef);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as Question[];
 }
 
 export async function addQuestion(question: Omit<Question, "id">): Promise<Question> {
-  const questions = await getQuestions();
-  const newQuestion: Question = {
+  const questionsRef = collection(db, "questions");
+  const docRef = await addDoc(questionsRef, {
     ...question,
-    id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    createdAt: new Date().toISOString(),
+  });
+  return {
+    id: docRef.id,
+    ...question,
   };
-  questions.push(newQuestion);
-  await writeJsonFile(QUESTIONS_FILE, questions);
-  return newQuestion;
 }
 
-export async function getAttempts(): Promise<Attempt[]> {
-  return readJsonFile<Attempt[]>(ATTEMPTS_FILE, []);
+export async function addQuestionsBulk(questions: Omit<Question, "id">[]): Promise<Question[]> {
+  const questionsRef = collection(db, "questions");
+  const batch = writeBatch(db);
+  const addedQuestions: Question[] = [];
+
+  // Firestore batches max 500 ops, so chunk if needed
+  const chunks = [];
+  for (let i = 0; i < questions.length; i += 450) {
+    chunks.push(questions.slice(i, i + 450));
+  }
+
+  for (const chunk of chunks) {
+    const batchInstance = writeBatch(db);
+    for (const q of chunk) {
+      const docRef = doc(questionsRef);
+      batchInstance.set(docRef, {
+        ...q,
+        createdAt: new Date().toISOString(),
+      });
+      addedQuestions.push({
+        id: docRef.id,
+        ...q,
+      });
+    }
+    await batchInstance.commit();
+  }
+
+  return addedQuestions;
 }
 
-export async function addAttempt(attempt: Omit<Attempt, "id" | "timestamp">): Promise<Attempt> {
-  const attempts = await getAttempts();
-  const newAttempt: Attempt = {
+export async function deleteQuestion(id: string): Promise<void> {
+  const docRef = doc(db, "questions", id);
+  await deleteDoc(docRef);
+}
+
+export async function deleteQuestionsByQuizName(quizName: string): Promise<number> {
+  const questionsRef = collection(db, "questions");
+  const snapshot = await getDocs(questionsRef);
+  const docsToDelete = snapshot.docs.filter(docSnap => {
+    const qData = docSnap.data();
+    const qName = qData.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
+    return qName === quizName.trim();
+  });
+
+  const chunks = [];
+  for (let i = 0; i < docsToDelete.length; i += 450) {
+    chunks.push(docsToDelete.slice(i, i + 450));
+  }
+
+  for (const chunk of chunks) {
+    const batchInstance = writeBatch(db);
+    for (const docSnap of chunk) {
+      batchInstance.delete(docSnap.ref);
+    }
+    await batchInstance.commit();
+  }
+
+  return docsToDelete.length;
+}
+
+export async function deleteQuestionsByBatchId(batchId: string): Promise<number> {
+  const questionsRef = collection(db, "questions");
+  const snapshot = await getDocs(questionsRef);
+  const docsToDelete = snapshot.docs.filter(docSnap => {
+    const qData = docSnap.data();
+    return qData.batchId === batchId;
+  });
+
+  const chunks = [];
+  for (let i = 0; i < docsToDelete.length; i += 450) {
+    chunks.push(docsToDelete.slice(i, i + 450));
+  }
+
+  for (const chunk of chunks) {
+    const batchInstance = writeBatch(db);
+    for (const docSnap of chunk) {
+      batchInstance.delete(docSnap.ref);
+    }
+    await batchInstance.commit();
+  }
+
+  return docsToDelete.length;
+}
+
+export async function updateQuizNameByBatchId(batchId: string, newQuizName: string): Promise<number> {
+  const questionsRef = collection(db, "questions");
+  const snapshot = await getDocs(questionsRef);
+  const docsToUpdate = snapshot.docs.filter(docSnap => {
+    const qData = docSnap.data();
+    return qData.batchId === batchId;
+  });
+
+  const chunks = [];
+  for (let i = 0; i < docsToUpdate.length; i += 450) {
+    chunks.push(docsToUpdate.slice(i, i + 450));
+  }
+
+  for (const chunk of chunks) {
+    const batchInstance = writeBatch(db);
+    for (const docSnap of chunk) {
+      batchInstance.update(docSnap.ref, { quizName: newQuizName });
+    }
+    await batchInstance.commit();
+  }
+
+  return docsToUpdate.length;
+}
+
+export async function updateQuizNameByLegacyName(oldQuizName: string, newQuizName: string): Promise<number> {
+  const questionsRef = collection(db, "questions");
+  const snapshot = await getDocs(questionsRef);
+  const docsToUpdate = snapshot.docs.filter(docSnap => {
+    const qData = docSnap.data();
+    const qName = qData.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
+    return qName === oldQuizName.trim();
+  });
+
+  const chunks = [];
+  for (let i = 0; i < docsToUpdate.length; i += 450) {
+    chunks.push(docsToUpdate.slice(i, i + 450));
+  }
+
+  for (const chunk of chunks) {
+    const batchInstance = writeBatch(db);
+    for (const docSnap of chunk) {
+      batchInstance.update(docSnap.ref, { quizName: newQuizName });
+    }
+    await batchInstance.commit();
+  }
+
+  return docsToUpdate.length;
+}
+
+// ================== ATTEMPTS ==================
+
+export async function getAttempts(userId?: string): Promise<Attempt[]> {
+  const attemptsRef = collection(db, "attempts");
+  let q;
+  if (userId) {
+    q = query(attemptsRef, where("userId", "==", userId));
+  } else {
+    q = query(attemptsRef);
+  }
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as Attempt[];
+}
+
+export async function addAttempt(
+  attempt: Omit<Attempt, "id" | "timestamp">
+): Promise<Attempt> {
+  const attemptsRef = collection(db, "attempts");
+  const newAttempt = {
     ...attempt,
-    id: `attempt_${Date.now()}`,
     timestamp: new Date().toISOString(),
   };
-  attempts.push(newAttempt);
-  await writeJsonFile(ATTEMPTS_FILE, attempts);
-  return newAttempt;
+  const docRef = await addDoc(attemptsRef, newAttempt);
+  return {
+    id: docRef.id,
+    ...newAttempt,
+  };
 }
+
+// ================== DASHBOARD ==================
 
 export interface DashboardStats {
   totalQuestions: number;
@@ -93,9 +242,9 @@ export interface DashboardStats {
   recentAttempts: Attempt[];
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(userId?: string): Promise<DashboardStats> {
   const questions = await getQuestions();
-  const attempts = await getAttempts();
+  const attempts = await getAttempts(userId);
 
   const totalQuestions = questions.length;
   const totalAttempts = attempts.length;
@@ -122,16 +271,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   });
 
   // Calculate solved counts and accuracy per category from attempts
-  attempts.forEach((a) => {
-    const cat = a.category;
-    if (cat !== "All" && categoryMap[cat]) {
-      categoryMap[cat].solvedCount += a.totalQuestions;
-      // We estimate accuracy by weighted sum of attempts in that category
-      // Add a running log
-    }
-  });
-
-  // For categories, let's detail the metrics based on questions answered
   const categoryAttempts: Record<string, { correct: number; total: number }> = {};
   attempts.forEach((a) => {
     const cat = a.category;
@@ -144,7 +283,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   Object.keys(categoryMap).forEach((cat) => {
     const solved = categoryAttempts[cat] || categoryAttempts["All"] || { correct: 0, total: 0 };
-    // Let's count solved count as number of questions attempted
     categoryMap[cat].solvedCount = solved.total;
     categoryMap[cat].accuracy = solved.total > 0 ? Math.round((solved.correct / solved.total) * 100) : 0;
   });

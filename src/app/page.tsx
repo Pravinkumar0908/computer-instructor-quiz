@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
+import { useAuth } from "@/lib/AuthContext";
+import { useRouter } from "next/navigation";
 import { 
   BookOpenIcon, 
   TrophyIcon, 
@@ -25,6 +27,8 @@ interface Question {
   difficulty: "Easy" | "Medium" | "Hard";
   explanation?: string;
   quizName?: string;
+  batchId?: string;
+  createdAt?: string;
 }
 
 interface Attempt {
@@ -65,7 +69,302 @@ const CATEGORIES = [
   "Logical Reasoning"
 ];
 
+const SYLLABUS_DATA = {
+  paper1: [
+    {
+      title: "राजस्थान कला एवं संस्कृति (Art & Culture)",
+      emoji: "🎨",
+      topics: [
+        "स्थापत्य कला — किले, महल, मंदिर, बावड़ी, छतरियाँ, हवेलियाँ",
+        "लोक देवता एवं देवियाँ",
+        "संत संप्रदाय",
+        "लोक नृत्य",
+        "लोकगीत",
+        "लोकनाट्य",
+        "चित्रकला",
+        "हस्तकला एवं लोककला",
+        "मेले एवं त्योहार",
+        "रीति-रिवाज",
+        "वेशभूषा एवं आभूषण",
+        "भाषा, बोलियाँ एवं साहित्य"
+      ]
+    },
+    {
+      title: "राजस्थान का इतिहास (History)",
+      emoji: "🏰",
+      topics: [
+        "राजस्थान की प्राचीन सभ्यताएं",
+        "राजस्थान के प्रमुख राजवंश",
+        "1857 की क्रांति",
+        "राजनीतिक जागरूकता",
+        "प्रजामंडल आंदोलन",
+        "जनजातीय आंदोलन",
+        "किसान आंदोलन",
+        "राजस्थान का एकीकरण",
+        "प्रमुख व्यक्तित्व"
+      ]
+    },
+    {
+      title: "राजस्थान का भूगोल (Geography)",
+      emoji: "🗺️",
+      topics: [
+        "स्थिति एवं विस्तार",
+        "भौतिक प्रदेश",
+        "अपवाह तंत्र",
+        "मृदा",
+        "जलवायु",
+        "वन्यजीव",
+        "कृषि",
+        "पशु सम्पदा",
+        "सिंचाई परियोजना",
+        "जनसंख्या",
+        "खनिज",
+        "ऊर्जा",
+        "मरुस्थलीकरण"
+      ]
+    },
+    {
+      title: "सामान्य विज्ञान (General Science)",
+      emoji: "🔬",
+      topics: [
+        "कोशिका",
+        "नियंत्रण एवं समन्वय",
+        "मानव कंकाल एवं पेशी तंत्र",
+        "पाचन तंत्र",
+        "मानव नेत्र",
+        "परिसंचरण तंत्र",
+        "मानव रोग तथा उपचार",
+        "मानव पोषण एवं संतुलित आहार",
+        "पौधों एवं जंतुओं का आर्थिक महत्व",
+        "बल एवं गति",
+        "कार्य, ऊर्जा एवं शक्ति",
+        "प्रकाश",
+        "तरंग एवं ध्वनि",
+        "स्थिर विद्युत एवं विद्युत धारा",
+        "परमाणु एवं अणु",
+        "अम्ल, क्षार एवं लवण",
+        "धातु एवं अधातु",
+        "कार्बन तथा उसके यौगिक",
+        "बहुलक अपमार्जक"
+      ]
+    },
+    {
+      title: "रीजनिंग (Reasoning)",
+      emoji: "🧠",
+      topics: [
+        "वर्णमाला परीक्षण (Alphabet Test)",
+        "संख्या एवं अक्षर शृंखला (Number and Alphabet Series)",
+        "सादृश्यता (Analogy)",
+        "वर्गीकरण (Classification)",
+        "क्रम परीक्षण (Ranking Test)",
+        "कोडिंग-डिकोडिंग (Coding-Decoding)",
+        "दिशा परीक्षण (Direction)",
+        "रक्त संबंध (Blood Relation)",
+        "पासा (Dice)",
+        "घन और घनाभ (Cube and Cuboid)",
+        "घड़ी (Clock)",
+        "कैलेंडर (Calendar)",
+        "वेन आरेख (Venn-diagram)",
+        "न्याय-वाक्य (Syllogism)",
+        "लुप्त संख्या (Missing Number)",
+        "शब्दों का तार्किक क्रम (Logical Order of Words)",
+        "गणितीय संक्रियाएँ (Mathematical Operations)",
+        "पानी और दर्पण प्रतिबिंब (Water & Mirror Image)",
+        "बैठक व्यवस्था (Seating Arrangement)",
+        "डेटा पर्याप्तता (Data Sufficiency)",
+        "आकृतियों की गणना (Counting Figure)",
+        "आकृतियों को पूर्ण करें (Figure Completion)",
+        "कथन और निष्कर्ष (Statement & Conclusion)",
+        "कथन एवं पूर्वधारणा (Statement & Assumptions)",
+        "कथन एवं तर्क (Statement & Argument)",
+        "विविध (Miscellaneous)"
+      ]
+    },
+    {
+      title: "गणित (Mathematics)",
+      emoji: "➗",
+      topics: [
+        "संख्या पद्धति (Number System)",
+        "घात, घातांक एवं करणी (Power, Surds and Indices)",
+        "सरलीकरण (Simplification)",
+        "औसत (Average)",
+        "प्रतिशत (Percentage)",
+        "अनुपात – समानुपात (Ratio and Proportion)",
+        "ल.स.प. एवं म.स.प. (L.C.M. and H.C.F.)",
+        "आयु (Age)",
+        "समय, चाल एवं दूरी (Time, Speed and Distance)",
+        "द्विघात समीकरण (Quadratic Equation)",
+        "निर्देशांक ज्यामिति (Co-ordinate Geometry)",
+        "आँकड़ों का विश्लेषण (D.I.)",
+        "क्षेत्रमिति (Mensuration)"
+      ]
+    }
+  ],
+  paper2: [
+    {
+      title: "पेडगोजी (Pedagogy)",
+      emoji: "📚",
+      topics: [
+        "शिक्षा शास्त्र का अर्थ, महत्त्व एवं विकास",
+        "शिक्षण अधिगम प्रक्रिया, व्यूह रचना एवं शिक्षण उपागम",
+        "अधिगम-प्रक्रिया, सहगामी अधिगम एवं निर्मितवाद आधारित अधिगम",
+        "शिक्षण प्रतिमान",
+        "अभिक्रमित अनुदेशन",
+        "शिक्षण सहायक सामग्री",
+        "एड्यूसेट (कृत्रिम शैक्षिक उपग्रह)",
+        "सूक्ष्म शिक्षण",
+        "सूचना एवं संप्रेषण तकनीकी"
+      ]
+    },
+    {
+      title: "बौद्धिक योग्यता (Intellectual Ability)",
+      emoji: "🧩",
+      topics: [
+        "Decision Making & Problem Solving",
+        "Data Interpretation",
+        "Data Sufficiency",
+        "Logical Reasoning & Analytical Ability",
+        "Major Developments in the Field of Information Technology"
+      ]
+    },
+    {
+      title: "Fundamentals of Computer",
+      emoji: "💻",
+      topics: [
+        "Overview of Computer System including Input-Output Devices",
+        "Pointing Devices & Scanner",
+        "Representation of Data (Digital vs Analog, Number System — Decimal, Binary & Hexadecimal)",
+        "Introduction to Data Processing",
+        "Concept of Files & Its Types"
+      ]
+    },
+    {
+      title: "Data Processing",
+      emoji: "📊",
+      topics: [
+        "Word Processing (MS-Word)",
+        "Spreadsheet Software (MS-Excel)",
+        "Presentation Software (MS-PowerPoint)",
+        "DBMS Software (MS-Access)"
+      ]
+    },
+    {
+      title: "Programming Fundamentals",
+      emoji: "🖥️",
+      topics: [
+        "Introduction to C, C++, Java, .NET",
+        "Artificial Intelligence (AI), Machine Learning",
+        "Python & Blockchain",
+        "Principles & Programming Techniques",
+        "Introduction to Object Oriented Programming (OOP) Concepts",
+        "Introduction to Integrated Development Environment (IDE) & Its Advantages"
+      ]
+    },
+    {
+      title: "Data Structures & Algorithm",
+      emoji: "🗂️",
+      topics: [
+        "Algorithm for Problem Solving",
+        "Abstract Data Types",
+        "Arrays as Data Structure",
+        "Linked List vs Array for Storage",
+        "Stack & Stack Operations",
+        "Queues",
+        "Binary Trees, Binary Search Trees",
+        "Graphs & Their Representation",
+        "Sorting & Searching",
+        "Symbol Table",
+        "Data Structures using C & C++"
+      ]
+    },
+    {
+      title: "Computer Organization & Operating System",
+      emoji: "🖱️",
+      topics: [
+        "Basic Structure of Computer",
+        "Computer Arithmetic Operations",
+        "Central Processing Unit & Instructions",
+        "Memory Organization",
+        "I/O Organization",
+        "Operating System Overview",
+        "Process Management",
+        "Finding & Processing Files"
+      ]
+    },
+    {
+      title: "Communication & Network Concepts",
+      emoji: "🌐",
+      topics: [
+        "Introduction to Computer Networks",
+        "Network Layers/Models",
+        "Networking Devices",
+        "Fundamentals of Mobile Communication"
+      ]
+    },
+    {
+      title: "Network Security",
+      emoji: "🔒",
+      topics: [
+        "Protecting Computer Systems from Viruses & Malicious Attacks",
+        "Introduction to Firewall & Its Utility",
+        "Backup & Restoring Data",
+        "Networking (LAN & WAN)",
+        "Security",
+        "Ethical Hacking"
+      ]
+    },
+    {
+      title: "Database Management System (DBMS)",
+      emoji: "🗃️",
+      topics: [
+        "Overview of Database Management",
+        "Architecture of Database System",
+        "Relational Database Management System (RDBMS)",
+        "Database Design",
+        "Manipulating Data",
+        "NoSQL Database Technologies",
+        "Selecting Right Database"
+      ]
+    },
+    {
+      title: "System Analysis & Design",
+      emoji: "🔧",
+      topics: [
+        "Introduction to System Analysis & Design",
+        "Requirement Gathering & Feasibility Analysis",
+        "Structured Analysis",
+        "Structured Design",
+        "Object-Oriented Modeling using UML",
+        "Testing",
+        "System Implementation & Maintenance",
+        "Other Software Development Approaches"
+      ]
+    },
+    {
+      title: "Internet of Things (IoT) & Its Applications",
+      emoji: "🌍",
+      topics: [
+        "Introduction to Internet Technology & Protocols",
+        "LAN, MAN, WAN",
+        "Search Services/Engines",
+        "Introduction to Online & Offline Messaging",
+        "World Wide Web Browser",
+        "Web Publishing",
+        "Basic Knowledge of HTML, XML & Scripts",
+        "Creation & Maintenance of Websites",
+        "HTML Interactivity Tools",
+        "Multimedia & Graphics",
+        "Voice Mail & Video Conferencing",
+        "Introduction to E-Commerce"
+      ]
+    }
+  ]
+};
+
 export default function ExamPrepPortal() {
+  const { user, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
+
   // Database States
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -74,7 +373,7 @@ export default function ExamPrepPortal() {
 
   // Layout View State
   // "dashboard" | "instructions" | "mock" | "results" | "practice"
-  const [view, setView] = useState<"dashboard" | "instructions" | "mock" | "results" | "practice">("dashboard");
+  const [view, setView] = useState<"dashboard" | "instructions" | "mock" | "results" | "practice" | "syllabus">("dashboard");
   const [selectedCategory, setSelectedCategory] = useState<string>("All Subjects");
 
   // Pre-Exam Instructions Portal States
@@ -152,6 +451,125 @@ export default function ExamPrepPortal() {
   const [importQuizName, setImportQuizName] = useState("Rajasthan Computer Instructor CBT Mock 1");
   const [selectedQuizName, setSelectedQuizName] = useState<string>("All Quizzes");
   const [activeQuizName, setActiveQuizName] = useState<string | null>(null);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>("All");
+  const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
+  const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string>("");
+
+  const [activeSyllabusTab, setActiveSyllabusTab] = useState<"overview" | "paper1" | "paper2">("overview");
+  const [syllabusSearch, setSyllabusSearch] = useState("");
+  const [universalSearch, setUniversalSearch] = useState("");
+  const [completedTopics, setCompletedTopics] = useState<string[]>([]);
+
+  // Load completed syllabus topics from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("completed_syllabus_topics");
+      if (stored) {
+        setCompletedTopics(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const toggleTopicCompletion = (topicName: string) => {
+    setCompletedTopics(prev => {
+      const updated = prev.includes(topicName)
+        ? prev.filter(t => t !== topicName)
+        : [...prev, topicName];
+      try {
+        localStorage.setItem("completed_syllabus_topics", JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
+  const selectAllTopics = (topics: string[]) => {
+    setCompletedTopics(prev => {
+      const filtered = prev.filter(t => !topics.includes(t));
+      const updated = [...filtered, ...topics];
+      try {
+        localStorage.setItem("completed_syllabus_topics", JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
+  const clearAllTopics = (topics: string[]) => {
+    setCompletedTopics(prev => {
+      const updated = prev.filter(t => !topics.includes(t));
+      try {
+        localStorage.setItem("completed_syllabus_topics", JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
+
+  const completedPaper1Count = useMemo(() => {
+    let count = 0;
+    SYLLABUS_DATA.paper1.forEach(sub => {
+      sub.topics.forEach(t => {
+        if (completedTopics.includes(t)) {
+          count++;
+        }
+      });
+    });
+    return count;
+  }, [completedTopics]);
+
+  const completedPaper2Count = useMemo(() => {
+    let count = 0;
+    SYLLABUS_DATA.paper2.forEach(sub => {
+      sub.topics.forEach(t => {
+        if (completedTopics.includes(t)) {
+          count++;
+        }
+      });
+    });
+    return count;
+  }, [completedTopics]);
+
+  const totalPaper1Topics = useMemo(() => {
+    return SYLLABUS_DATA.paper1.reduce((acc, sub) => acc + sub.topics.length, 0);
+  }, []);
+
+  const totalPaper2Topics = useMemo(() => {
+    return SYLLABUS_DATA.paper2.reduce((acc, sub) => acc + sub.topics.length, 0);
+  }, []);
+
+  const totalTopics = totalPaper1Topics + totalPaper2Topics;
+  const completedTotalCount = completedPaper1Count + completedPaper2Count;
+
+  const filteredPaper1 = useMemo(() => {
+    if (!syllabusSearch.trim()) return SYLLABUS_DATA.paper1;
+    const query = syllabusSearch.toLowerCase();
+    return SYLLABUS_DATA.paper1.map(sub => {
+      const matchingTopics = sub.topics.filter(t => t.toLowerCase().includes(query));
+      if (sub.title.toLowerCase().includes(query) || matchingTopics.length > 0) {
+        return { ...sub, topics: matchingTopics.length > 0 ? matchingTopics : sub.topics };
+      }
+      return null;
+    }).filter(Boolean) as typeof SYLLABUS_DATA.paper1;
+  }, [syllabusSearch]);
+
+  const filteredPaper2 = useMemo(() => {
+    if (!syllabusSearch.trim()) return SYLLABUS_DATA.paper2;
+    const query = syllabusSearch.toLowerCase();
+    return SYLLABUS_DATA.paper2.map(sub => {
+      const matchingTopics = sub.topics.filter(t => t.toLowerCase().includes(query));
+      if (sub.title.toLowerCase().includes(query) || matchingTopics.length > 0) {
+        return { ...sub, topics: matchingTopics.length > 0 ? matchingTopics : sub.topics };
+      }
+      return null;
+    }).filter(Boolean) as typeof SYLLABUS_DATA.paper2;
+  }, [syllabusSearch]);
 
   // Premium AI Prompt Customizer States
   const [promptLanguage, setPromptLanguage] = useState<"dual" | "english" | "hindi">("dual");
@@ -306,7 +724,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       if (Array.isArray(parsedData)) {
         payloadToSubmit = parsedData.map(q => ({
           ...q,
-          quizName: q.quizName || quizTitleToUse
+          quizName: quizTitleToUse // Force all questions under ONE quiz card
         }));
       } else if (parsedData && Array.isArray(parsedData.questions)) {
         const finalTitle = parsedData.title || quizTitleToUse;
@@ -314,13 +732,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           title: finalTitle,
           questions: parsedData.questions.map((q: any) => ({
             ...q,
-            quizName: q.quizName || finalTitle
+            quizName: finalTitle // Force all questions under ONE quiz card
           }))
         };
       } else if (parsedData && typeof parsedData === "object") {
         payloadToSubmit = {
           ...parsedData,
-          quizName: parsedData.quizName || quizTitleToUse
+          quizName: quizTitleToUse
         };
       }
 
@@ -351,8 +769,16 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     }
   };
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [authLoading, user, router]);
+
   // Fetch initial data
   const loadData = async () => {
+    if (!user) return;
     try {
       setLoading(true);
       setError(null);
@@ -362,7 +788,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       const questionsData = await qRes.json();
       setQuestions(questionsData);
 
-      const sRes = await fetch("/api/attempts");
+      const sRes = await fetch(`/api/attempts?userId=${user.uid}`);
       if (!sRes.ok) throw new Error("Failed to load dashboard metrics");
       const statsData = await sRes.json();
       setStats(statsData);
@@ -376,8 +802,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) loadData();
+  }, [user]);
 
   // Timer effect for live mock test
   useEffect(() => {
@@ -428,16 +854,29 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   };
 
   // Launch Practice Session
-  const startPractice = (category: string, quizName?: string) => {
+  const startPractice = (category: string, quizName?: string, batchId?: string) => {
     const qName = quizName || selectedQuizName;
+    const bId = batchId || selectedBatchId;
     if (quizName) {
       setSelectedQuizName(quizName);
       setActiveQuizName(quizName);
     }
+    if (batchId) {
+      setSelectedBatchId(batchId);
+      setActiveBatchId(batchId);
+    } else if (quizName) {
+      setSelectedBatchId(quizName);
+      setActiveBatchId(quizName);
+    }
     setSelectedCategory(category);
 
     let filtered = questions;
-    if (qName && qName !== "All Quizzes") {
+    if (bId && bId !== "All") {
+      filtered = filtered.filter(q => {
+        const qBatchId = q.batchId || q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
+        return qBatchId === bId;
+      });
+    } else if (qName && qName !== "All Quizzes") {
       filtered = filtered.filter(q => (q.quizName || "Rajasthan Computer Instructor CBT Mock 1") === qName);
     }
     if (category !== "All Subjects") {
@@ -530,7 +969,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           timeSpentSeconds: 0,
           category: selectedCategory,
           correctAnswersCount: correctCount,
-          quizName: activeQuizName || "Rajasthan Computer Instructor CBT Mock 1"
+          quizName: activeQuizName || "Rajasthan Computer Instructor CBT Mock 1",
+          userId: user?.uid || ""
         })
       });
 
@@ -544,16 +984,29 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   };
 
   // Transition to TCS iON Instructions Page
-  const transitionToInstructions = (category: string, quizName?: string) => {
+  const transitionToInstructions = (category: string, quizName?: string, batchId?: string) => {
     const qName = quizName || selectedQuizName;
+    const bId = batchId || selectedBatchId;
     if (quizName) {
       setSelectedQuizName(quizName);
       setActiveQuizName(quizName);
     }
+    if (batchId) {
+      setSelectedBatchId(batchId);
+      setActiveBatchId(batchId);
+    } else if (quizName) {
+      setSelectedBatchId(quizName);
+      setActiveBatchId(quizName);
+    }
     setSelectedCategory(category);
 
     let filtered = questions;
-    if (qName && qName !== "All Quizzes") {
+    if (bId && bId !== "All") {
+      filtered = filtered.filter(q => {
+        const qBatchId = q.batchId || q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
+        return qBatchId === bId;
+      });
+    } else if (qName && qName !== "All Quizzes") {
       filtered = filtered.filter(q => (q.quizName || "Rajasthan Computer Instructor CBT Mock 1") === qName);
     }
     if (category !== "All Subjects") {
@@ -572,7 +1025,12 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   // Launch Mock Test (TCS iON CBT Layout)
   const startMockTest = () => {
     let filtered = questions;
-    if (selectedQuizName && selectedQuizName !== "All Quizzes") {
+    if (selectedBatchId && selectedBatchId !== "All") {
+      filtered = filtered.filter(q => {
+        const qBatchId = q.batchId || q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
+        return qBatchId === selectedBatchId;
+      });
+    } else if (selectedQuizName && selectedQuizName !== "All Quizzes") {
       filtered = filtered.filter(q => (q.quizName || "Rajasthan Computer Instructor CBT Mock 1") === selectedQuizName);
     }
     if (selectedCategory !== "All Subjects") {
@@ -719,7 +1177,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           timeSpentSeconds: timeSpent,
           category: selectedCategory,
           correctAnswersCount: correctCount,
-          quizName: activeQuizName || "Rajasthan Computer Instructor CBT Mock 1"
+          quizName: activeQuizName || "Rajasthan Computer Instructor CBT Mock 1",
+          userId: user?.uid || ""
         })
       });
 
@@ -801,6 +1260,89 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     }
   };
 
+  const handleDeleteQuiz = async (quizName: string, batchId?: string) => {
+    const isBatch = batchId && batchId.startsWith("batch_");
+    const confirmMsg = isBatch
+      ? `⚠️ WARNING: Are you sure you want to permanently delete all questions in this specific upload batch ("${quizName}")? This action will erase it completely and cannot be undone.`
+      : `⚠️ WARNING: Are you sure you want to permanently delete all questions in "${quizName}"? This action will erase it completely and cannot be undone.`;
+
+    if (!confirm(confirmMsg)) {
+      return;
+    }
+    try {
+      const url = isBatch
+        ? `/api/questions?batchId=${encodeURIComponent(batchId)}`
+        : `/api/questions?quizName=${encodeURIComponent(quizName)}`;
+
+      const response = await fetch(url, {
+        method: "DELETE"
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete batch from database.");
+      }
+      const data = await response.json();
+      alert(`🗑️ ${data.message || "Successfully deleted the batch."}`);
+      
+      if (selectedQuizName === quizName) {
+        setSelectedQuizName("All Quizzes");
+      }
+      if (activeQuizName === quizName) {
+        setActiveQuizName(null);
+      }
+      
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete quiz.");
+    }
+  };
+
+  const handleRenameQuiz = async (quizName: string, batchId: string) => {
+    if (!editingName.trim()) {
+      alert("Please enter a valid name.");
+      return;
+    }
+
+    if (editingName.trim() === quizName) {
+      setEditingBatchId(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const isBatch = batchId && batchId.startsWith("batch_");
+      const payload = isBatch
+        ? { batchId, newQuizName: editingName.trim() }
+        : { quizName, newQuizName: editingName.trim() };
+
+      const response = await fetch("/api/questions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to rename quiz.");
+      }
+
+      const data = await response.json();
+      alert(`✏️ ${data.message || "Successfully renamed the quiz."}`);
+
+      if (selectedQuizName === quizName) {
+        setSelectedQuizName(editingName.trim());
+      }
+      if (activeQuizName === quizName) {
+        setActiveQuizName(editingName.trim());
+      }
+
+      setEditingBatchId(null);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Failed to rename quiz.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Dynamic active categories derived from questions present in database
   const activeCategories = useMemo(() => {
     const catsSet = new Set<string>();
@@ -810,32 +1352,50 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     return Array.from(catsSet);
   }, [questions]);
 
-  // Group questions by Quiz Name (Unified Quiz Cards)
+  // Group questions by Quiz Name and Batch (Unified Quiz Cards)
   const quizzes = useMemo(() => {
     const quizMap: Record<string, {
       name: string;
+      batchId: string;
+      createdAt?: string;
       questions: Question[];
       categoryCounts: Record<string, number>;
       difficulties: Set<string>;
     }> = {};
 
     questions.forEach(q => {
+      const qBatchId = q.batchId || q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
       const qName = q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1";
-      if (!quizMap[qName]) {
-        quizMap[qName] = {
+      if (!quizMap[qBatchId]) {
+        quizMap[qBatchId] = {
           name: qName,
+          batchId: qBatchId,
+          createdAt: q.createdAt,
           questions: [],
           categoryCounts: {},
           difficulties: new Set()
         };
       }
-      quizMap[qName].questions.push(q);
-      quizMap[qName].categoryCounts[q.category] = (quizMap[qName].categoryCounts[q.category] || 0) + 1;
-      quizMap[qName].difficulties.add(q.difficulty);
+      quizMap[qBatchId].questions.push(q);
+      quizMap[qBatchId].categoryCounts[q.category] = (quizMap[qBatchId].categoryCounts[q.category] || 0) + 1;
+      quizMap[qBatchId].difficulties.add(q.difficulty);
     });
 
     return Object.values(quizMap);
   }, [questions]);
+
+  const filteredQuizzes = useMemo(() => {
+    if (!universalSearch.trim()) return quizzes;
+    const query = universalSearch.toLowerCase();
+    return quizzes.filter(quiz => {
+      if (quiz.name.toLowerCase().includes(query)) return true;
+      if (quiz.batchId.toLowerCase().includes(query)) return true;
+      const categories = Object.keys(quiz.categoryCounts);
+      if (categories.some(cat => cat.toLowerCase().includes(query))) return true;
+      if (quiz.questions.some(q => q.question.toLowerCase().includes(query) || q.options.some(o => o.toLowerCase().includes(query)))) return true;
+      return false;
+    });
+  }, [quizzes, universalSearch]);
 
   // Stats computation helper (segmenting stats by activeQuizName dynamically to prevent mixups)
   const dashboardStats = useMemo(() => {
@@ -843,7 +1403,9 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
     const allAttempts = stats?.recentAttempts || [];
     
     // Filter questions and attempts if inside a specific Quiz Hub
-    const activeQuestions = activeQuizName
+    const activeQuestions = activeBatchId && activeBatchId !== "All"
+      ? questions.filter(q => (q.batchId || q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1") === activeBatchId)
+      : activeQuizName
       ? questions.filter(q => (q.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1") === activeQuizName)
       : questions;
 
@@ -896,7 +1458,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       categoryStats: catStats,
       recentAttempts: activeAttempts.slice(0, 5) // Return 5 most recent attempts for this quiz
     };
-  }, [stats, questions, activeQuizName]);
+  }, [stats, questions, activeQuizName, activeBatchId]);
 
   // Canvas Drawing Handlers for Scratchpad
   const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -986,30 +1548,45 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   // Calculator helper keys mapping
   const calcBtns = ["DEC", "BIN", "HEX", "C", "(", ")", "/", "*", "7", "8", "9", "-", "4", "5", "6", "+", "1", "2", "3", "="];
 
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          <p className="text-gray-500 text-sm">Loading SSC Exam Portal...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, don't render (redirect will happen)
+  if (!user) return null;
+
   return (
-    <div className="relative min-h-screen bg-[#030712] text-slate-100 overflow-hidden flex flex-col font-sans">
+    <div className="relative min-h-screen bg-[#f0f2f5] text-gray-900 overflow-hidden flex flex-col font-sans">
       
       {/* Background Glowing Spots */}
       <div className="glow-spot-indigo top-[-100px] left-[-50px] animate-pulse-slow"></div>
       <div className="glow-spot-emerald bottom-[-150px] right-[-50px] animate-pulse-slow"></div>
       <div className="glow-spot-rose top-[30%] right-[10%] opacity-40 animate-pulse-slow"></div>
 
-      {/* Main Header */}
-      <nav className="glass sticky top-0 z-40 border-b border-white/5 py-4 px-6 md:px-12 backdrop-blur-md">
+      {/* SSC Exam Header */}
+      <nav className="ssc-nav sticky top-0 z-40 py-3 px-6 md:px-12">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div 
             onClick={() => setView("dashboard")} 
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-300">
-              <span className="text-xl font-bold text-white">TCS</span>
+            <div className="h-10 w-10 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+              <span className="text-lg font-extrabold text-yellow-400">SSC</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-300 bg-clip-text text-transparent">
-                Govt Exam CBT Suite
+              <h1 className="text-lg font-bold tracking-tight text-white">
+                CBT Exam Portal
               </h1>
-              <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold leading-none mt-0.5">
-                TCS iON & Testbook Simulator
+              <p className="text-[10px] uppercase tracking-widest text-blue-200 font-semibold leading-none mt-0.5">
+                Staff Selection Commission Simulator
               </p>
             </div>
           </div>
@@ -1017,25 +1594,47 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           {/* Quick study aids drawer toggles */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowScratchpad(!showScratchpad)}
-              className={`rounded-full text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
-                showScratchpad ? "bg-indigo-600/30 border-indigo-500 text-indigo-200" : "bg-slate-900 border-white/5 text-slate-400 hover:text-white"
+              onClick={() => {
+                setView(view === "syllabus" ? "dashboard" : "syllabus");
+                setShowScratchpad(false);
+                setShowCheatSheet(false);
+                setShowCalculator(false);
+              }}
+              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+                view === "syllabus" ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              📋 Syllabus
+            </button>
+            <button
+              onClick={() => {
+                setShowScratchpad(!showScratchpad);
+                if (view === "syllabus") setView("dashboard");
+              }}
+              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+                showScratchpad ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
               }`}
             >
               📝 Draft
             </button>
             <button
-              onClick={() => setShowCheatSheet(!showCheatSheet)}
-              className={`rounded-full text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
-                showCheatSheet ? "bg-indigo-600/30 border-indigo-500 text-indigo-200" : "bg-slate-900 border-white/5 text-slate-400 hover:text-white"
+              onClick={() => {
+                setShowCheatSheet(!showCheatSheet);
+                if (view === "syllabus") setView("dashboard");
+              }}
+              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+                showCheatSheet ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
               }`}
             >
               ⚡ Notes
             </button>
             <button
-              onClick={() => setShowCalculator(!showCalculator)}
-              className={`rounded-full text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
-                showCalculator ? "bg-indigo-600/30 border-indigo-500 text-indigo-200" : "bg-slate-900 border-white/5 text-slate-400 hover:text-white"
+              onClick={() => {
+                setShowCalculator(!showCalculator);
+                if (view === "syllabus") setView("dashboard");
+              }}
+              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+                showCalculator ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
               }`}
             >
               🧮 Calc
@@ -1043,11 +1642,43 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             
             <button
               onClick={() => setShowAdminPanel(!showAdminPanel)}
-              className="hidden sm:flex rounded-full bg-slate-800 hover:bg-slate-700 text-xs font-semibold px-4 py-2 items-center gap-1 border border-white/10 transition-all cursor-pointer"
+              className="hidden sm:flex rounded-lg bg-yellow-400 hover:bg-yellow-300 text-xs font-bold px-4 py-2 items-center gap-1 text-gray-900 transition-all cursor-pointer shadow-sm"
             >
-              <PlusIcon size={14} className="text-indigo-400" />
+              <PlusIcon size={14} />
               <span>Add Question</span>
             </button>
+
+            {/* User Profile & Logout */}
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-white/20">
+              <div className="flex items-center gap-2">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full border-2 border-white/50"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-xs font-bold text-gray-900">
+                    {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="hidden md:inline text-xs text-blue-100 max-w-[120px] truncate">
+                  {user.displayName || user.email}
+                </span>
+              </div>
+              <button
+                id="logout-btn"
+                onClick={async () => {
+                  await logout();
+                  router.push("/login");
+                }}
+                className="rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-1.5 border border-white/20 transition-all cursor-pointer"
+                title="Sign Out"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -1057,11 +1688,11 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
         
         {/* Dynamic Admin Question Creator Panel (Manual vs AI Importer Tabs) */}
         {showAdminPanel && (
-          <div className="mb-8 glass-premium p-6 md:p-8 rounded-3xl animate-fade-in border border-indigo-500/20 relative overflow-hidden">
+          <div className="mb-8 glass-premium p-6 md:p-8 rounded-3xl animate-fade-in border border-indigo-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-3">
               <button 
                 onClick={() => setShowAdminPanel(false)}
-                className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-slate-500 hover:text-slate-800 cursor-pointer"
               >
                 <XIcon size={18} />
               </button>
@@ -1073,19 +1704,19 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 <PlusIcon size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-white">Database Management & AI Compiler</h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <h2 className="text-xl font-bold tracking-tight text-slate-800">Database Management & AI Compiler</h2>
+                <p className="text-xs text-slate-600 mt-0.5">
                   डेटाबेस में नए कंप्यूटर अनुदेशक प्रश्नों को जोड़ें (मैनुअल या बल्क AI JSON आयात द्वारा)
                 </p>
               </div>
             </div>
 
             {/* Tab Toggles */}
-            <div className="flex border-b border-white/5 mb-6 gap-2">
+            <div className="flex border-b border-gray-200 mb-6 gap-2">
               <button
                 onClick={() => setAdminTab("manual")}
                 className={`py-2.5 px-4 text-xs font-bold transition-all relative cursor-pointer ${
-                  adminTab === "manual" ? "text-indigo-400 font-extrabold border-b-2 border-indigo-500" : "text-slate-400 hover:text-slate-200"
+                  adminTab === "manual" ? "text-indigo-600 font-extrabold border-b-2 border-indigo-600" : "text-slate-500 hover:text-indigo-600"
                 }`}
               >
                 Single Question Wizard (मैनुअल जोड़ें)
@@ -1093,10 +1724,10 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               <button
                 onClick={() => setAdminTab("bulk")}
                 className={`py-2.5 px-4 text-xs font-bold transition-all relative cursor-pointer flex items-center gap-1.5 ${
-                  adminTab === "bulk" ? "text-indigo-400 font-extrabold border-b-2 border-indigo-500" : "text-slate-400 hover:text-slate-200"
+                  adminTab === "bulk" ? "text-indigo-600 font-extrabold border-b-2 border-indigo-600" : "text-slate-500 hover:text-indigo-600"
                 }`}
               >
-                <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping"></span>
+                <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-ping"></span>
                 <span>AI Bulk JSON Importer (बल्क आयातक)</span>
               </button>
             </div>
@@ -1105,7 +1736,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             {adminTab === "manual" && (
               <form onSubmit={handleCreateQuestionSubmit} className="space-y-4 animate-fade-in">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                     Question Text (English + Hindi recommended)
                   </label>
                   <textarea
@@ -1114,14 +1745,14 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     value={formQuestion}
                     onChange={(e) => setFormQuestion(e.target.value)}
                     placeholder="e.g. What is the complexity of Binary Search? (बाइनरी सर्च की जटिलता क्या है?)"
-                    className="w-full rounded-xl p-3 text-sm glass-input text-white outline-none"
+                    className="w-full rounded-xl p-3 text-sm glass-input outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {formOptions.map((option, idx) => (
                     <div key={idx}>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">
                         Option {idx + 1}
                       </label>
                       <input
@@ -1130,14 +1761,14 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                         value={option}
                         onChange={(e) => handleOptionChange(idx, e.target.value)}
                         placeholder={`Enter option ${idx + 1}`}
-                        className="w-full rounded-xl p-3 text-sm glass-input text-white outline-none"
+                        className="w-full rounded-xl p-3 text-sm glass-input outline-none"
                       />
                     </div>
                   ))}
                 </div>
 
                 <div className="pt-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Quiz Name / Paper Title (क्विज / परीक्षा पत्र का नाम)
                   </label>
                   <input
@@ -1146,19 +1777,19 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     value={formQuizName}
                     onChange={(e) => setFormQuizName(e.target.value)}
                     placeholder="E.g. Rajasthan Computer Instructor CBT Mock 1"
-                    className="w-full rounded-xl p-3 text-sm glass-input text-white outline-none focus:border-indigo-500/50"
+                    className="w-full rounded-xl p-3 text-sm glass-input outline-none focus:border-indigo-500/50"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Correct Option Index
                     </label>
                     <select
                       value={formAnswerIndex}
                       onChange={(e) => setFormAnswerIndex(parseInt(e.target.value))}
-                      className="w-full rounded-xl p-3 text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                      className="w-full rounded-xl p-3 text-sm bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                     >
                       <option value={0}>Option 1 (पहला विकल्प)</option>
                       <option value={1}>Option 2 (दूसरा विकल्प)</option>
@@ -1168,13 +1799,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Syllabus Category
                     </label>
                     <select
                       value={formCategory}
                       onChange={(e) => setFormCategory(e.target.value)}
-                      className="w-full rounded-xl p-3 text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                      className="w-full rounded-xl p-3 text-sm bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                     >
                       {CATEGORIES.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
@@ -1183,13 +1814,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Difficulty Level
                     </label>
                     <select
                       value={formDifficulty}
                       onChange={(e) => setFormDifficulty(e.target.value as any)}
-                      className="w-full rounded-xl p-3 text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                      className="w-full rounded-xl p-3 text-sm bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                     >
                       <option value="Easy">Easy (आसान)</option>
                       <option value="Medium">Medium (सामान्य)</option>
@@ -1199,7 +1830,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                     Detailed Explanation (Hindi/English)
                   </label>
                   <textarea
@@ -1207,13 +1838,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     value={formExplanation}
                     onChange={(e) => setFormExplanation(e.target.value)}
                     placeholder="Explain why this choice is correct..."
-                    className="w-full rounded-xl p-3 text-sm glass-input text-white outline-none"
+                    className="w-full rounded-xl p-3 text-sm glass-input outline-none"
                   />
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
                   {formSuccessMessage ? (
-                    <span className="text-sm font-semibold text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl flex items-center gap-1.5 border border-emerald-500/20 animate-pulse">
+                    <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl flex items-center gap-1.5 border border-emerald-200 animate-pulse">
                       <CheckIcon size={16} />
                       {formSuccessMessage}
                     </span>
@@ -1237,12 +1868,12 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               <form onSubmit={handleBulkImportSubmit} className="space-y-5 animate-fade-in">
                 
                 {/* Premium AI Command Center & Prompt Customizer Dashboard */}
-                <div className="rounded-2xl bg-indigo-950/15 border border-indigo-500/10 p-5 md:p-6 space-y-5 relative overflow-hidden">
+                <div className="rounded-2xl bg-indigo-50/70 border border-indigo-100 p-5 md:p-6 space-y-5 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-xl pointer-events-none"></div>
                   
                   <div className="flex items-center gap-2.5">
-                    <span className="h-2 w-2 rounded-full bg-purple-400 animate-pulse"></span>
-                    <span className="text-xs font-bold text-indigo-300 uppercase tracking-widest">
+                    <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse"></span>
+                    <span className="text-xs font-bold text-indigo-700 uppercase tracking-widest">
                       AI Command Center & Prompt Builder (प्रॉम्प्ट जनरेटर)
                     </span>
                   </div>
@@ -1254,13 +1885,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                             Language (भाषा)
                           </label>
                           <select
                             value={promptLanguage}
                             onChange={(e) => setPromptLanguage(e.target.value as any)}
-                            className="w-full rounded-xl p-2.5 text-xs bg-slate-900 border border-white/5 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                            className="w-full rounded-xl p-2.5 text-xs bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                           >
                             <option value="dual">Dual (हिन्दी + Eng)</option>
                             <option value="english">Strictly English</option>
@@ -1269,13 +1900,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                             Question Size
                           </label>
                           <select
                             value={promptCount}
                             onChange={(e) => setPromptCount(parseInt(e.target.value))}
-                            className="w-full rounded-xl p-2.5 text-xs bg-slate-900 border border-white/5 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                            className="w-full rounded-xl p-2.5 text-xs bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                           >
                             <option value={5}>5 Questions</option>
                             <option value={10}>10 Questions</option>
@@ -1286,13 +1917,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                          <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                             Paper Level
                           </label>
                           <select
                             value={promptDifficulty}
                             onChange={(e) => setPromptDifficulty(e.target.value as any)}
-                            className="w-full rounded-xl p-2.5 text-xs bg-slate-900 border border-white/5 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                            className="w-full rounded-xl p-2.5 text-xs bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                           >
                             <option value="high">High / Hard Level</option>
                             <option value="balanced">Balanced Mix</option>
@@ -1301,13 +1932,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                       </div>
 
-                      <div className="text-[10px] text-slate-400 space-y-1 bg-slate-900/50 p-3 rounded-xl border border-white/5">
+                      <div className="text-[10px] text-slate-600 space-y-1 bg-white/80 p-3 rounded-xl border border-gray-200 shadow-sm">
                         <p className="flex items-center gap-1.5">
-                          <CheckIcon size={10} className="text-emerald-400" />
+                          <CheckIcon size={10} className="text-emerald-600" />
                           <span>Strictly shuffles and mixes subjects for real exam simulations.</span>
                         </p>
                         <p className="flex items-center gap-1.5">
-                          <CheckIcon size={10} className="text-emerald-400" />
+                          <CheckIcon size={10} className="text-emerald-600" />
                           <span>Asks the AI to write rich, bilingual explanations.</span>
                         </p>
                       </div>
@@ -1315,33 +1946,33 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                     {/* Right: Notes Paster */}
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                      <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
                         <span>Optional: Paste Study Notes / Syllabus Page here</span>
-                        <span className="text-[8px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono">EXTRACTOR ACTIVE</span>
+                        <span className="text-[8px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-bold">EXTRACTOR ACTIVE</span>
                       </label>
                       <textarea
                         rows={3}
                         value={promptNotes}
                         onChange={(e) => setPromptNotes(e.target.value)}
                         placeholder="Paste text from your study notes or computer science textbook... The AI will extract premium questions directly from your content!"
-                        className="w-full rounded-xl p-3 text-xs glass-input text-slate-300 placeholder-slate-600 outline-none"
+                        className="w-full rounded-xl p-3 text-xs glass-input outline-none"
                       />
                     </div>
 
                   </div>
 
                   {/* Actions & Preview Collapsible */}
-                  <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="text-[10px] text-slate-400 text-center sm:text-left">
+                  <div className="pt-3 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="text-[10px] text-slate-500 text-center sm:text-left font-medium">
                       💡 Click below to copy the compiled prompt, then paste it into **Gemini** or **ChatGPT**!
                     </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <details className="group w-full sm:w-auto">
-                        <summary className="rounded-xl border border-white/10 hover:bg-white/5 text-[10px] font-semibold py-2 px-3 transition-all cursor-pointer text-center list-none outline-none">
+                        <summary className="rounded-xl border border-gray-200 hover:bg-gray-50 text-[10px] font-bold py-2 px-3 transition-all cursor-pointer text-center list-none outline-none text-slate-700">
                           Preview Prompt Structure
                         </summary>
-                        <div className="absolute left-6 right-6 mt-2 max-h-48 overflow-y-auto glass p-4 rounded-xl text-[10px] font-mono text-slate-400 whitespace-pre-wrap select-all border border-white/10 shadow-2xl z-30">
+                        <div className="absolute left-6 right-6 mt-2 max-h-48 overflow-y-auto glass p-4 rounded-xl text-[10px] font-mono text-slate-600 whitespace-pre-wrap select-all border border-gray-200 shadow-xl z-30">
                           {generateCustomPrompt}
                         </div>
                       </details>
@@ -1363,7 +1994,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                 {/* Quiz Name Selection */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                  <label className="block text-xs font-semibold text-indigo-700 uppercase tracking-wider">
                     Quiz Name / Paper Title (क्विज / परीक्षा पत्र का शीर्षक):
                   </label>
                   <input
@@ -1372,13 +2003,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     value={importQuizName}
                     onChange={(e) => setImportQuizName(e.target.value)}
                     placeholder="E.g. Rajasthan Computer Instructor CBT Mock 1"
-                    className="w-full rounded-2xl p-3.5 text-xs bg-slate-950/60 border border-white/10 text-slate-300 placeholder-slate-600 outline-none focus:border-indigo-500/50"
+                    className="w-full rounded-2xl p-3.5 text-xs glass-input outline-none focus:border-indigo-500/50"
                   />
                 </div>
 
                 {/* Textarea container */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                     Paste JSON Questions Block (यहाँ अपना JSON पेस्ट करें)
                   </label>
                   <textarea
@@ -1387,7 +2018,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     value={jsonInput}
                     onChange={(e) => validatePastedJson(e.target.value)}
                     placeholder={`Paste JSON here...\nExample structure:\n[\n  {\n    "question": "What is the size of IPv6? (IPv6 का साइज क्या है?)",\n    "options": ["32 bits", "64 bits", "128 bits", "256 bits"],\n    "answerIndex": 2,\n    "category": "Computer Networks & Security",\n    "difficulty": "Easy",\n    "explanation": "IPv6 addresses are 128-bits long."\n  }\n]`}
-                    className="w-full rounded-2xl p-4 text-xs font-mono bg-slate-950/60 border border-white/10 text-slate-300 placeholder-slate-600 outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+                    className="w-full rounded-2xl p-4 text-xs font-mono glass-input outline-none focus:ring-1 focus:ring-indigo-500/20"
                   />
                 </div>
 
@@ -1397,17 +2028,17 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   {/* Dynamic Status Badge */}
                   <div>
                     {jsonStatus === "idle" && (
-                      <span className="text-xs font-semibold text-slate-500 bg-slate-900 px-3 py-1.5 rounded-full border border-white/5">
+                      <span className="text-xs font-semibold text-slate-500 bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200">
                         ⚪ Waiting for JSON input (इनपुट की प्रतीक्षा है)
                       </span>
                     )}
                     {jsonStatus === "error" && (
-                      <div className="text-xs font-semibold text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-xl border border-rose-500/20 max-w-lg leading-relaxed">
+                      <div className="text-xs font-semibold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 max-w-lg leading-relaxed">
                         ⚠️ <strong>Parsing Error:</strong> {jsonErrorMsg}
                       </div>
                     )}
                     {jsonStatus === "success" && (
-                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20 flex items-center gap-1 animate-pulse">
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200 flex items-center gap-1 animate-pulse">
                         <CheckIcon size={14} />
                         <span>Validated: Ready to inject {jsonParsedCount} Computer Science questions!</span>
                       </span>
@@ -1417,7 +2048,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   {/* Submit and message */}
                   <div className="flex items-center gap-3">
                     {bulkSuccessMsg && (
-                      <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20">
+                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
                         {bulkSuccessMsg}
                       </span>
                     )}
@@ -1435,497 +2066,1048 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
               </form>
             )}
-
           </div>
         )}
 
         {view === "dashboard" && (
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             
-            {/* 1. STATE A: NO ACTIVE QUIZ SELECTED -> SHOW QUIZ CATALOG */}
-            {!activeQuizName ? (
-              <div className="space-y-8">
-                {/* Header Hero Banner for Catalog */}
-                <div className="glass-premium rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                  
-                  <div className="space-y-3 max-w-2xl text-center md:text-left">
-                    <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 text-xs font-semibold tracking-wider text-indigo-300 uppercase">
-                      Rajasthan, DSSSB & KVS Computer Instructor Syllabus
+            {/* SSC Dashboard Hero */}
+            <div className="glass-premium rounded-2xl p-6 md:p-8 relative overflow-hidden">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700 border border-blue-200 uppercase tracking-wider">
+                      SSC / RSMSSB / KVS
                     </span>
-                    <h2 className="text-3xl font-extrabold md:text-4xl text-white tracking-tight leading-tight">
-                      कम्प्यूटर अनुदेशक <br className="hidden sm:inline" /> 
-                      <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent">
-                        CBT परीक्षा तैयारी पोर्टल
-                      </span>
-                    </h2>
-                    <p className="text-sm text-slate-300 max-w-xl">
-                      अपने कंप्यूटर शिक्षक परीक्षा की तैयारी के लिए क्विज पेपर चुनें। प्रत्येक क्विज पूर्ण रूप से अलग और स्वतंत्र है।
-                    </p>
+                    <span className="inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700 border border-green-200">
+                      🟢 Online
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                    Computer Instructor CBT Practice
+                  </h2>
+                  <p className="text-sm text-gray-500 max-w-xl">
+                    कम्प्यूटर अनुदेशक परीक्षा की तैयारी करें — {questions.length} प्रश्न डेटाबेस में उपलब्ध हैं
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                  <button
+                    onClick={() => setView("syllabus")}
+                    className="rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  >
+                    <span>📋 Syllabus</span>
+                  </button>
+                  <button
+                    onClick={() => startPractice("All Subjects")}
+                    className="ssc-btn-secondary flex items-center justify-center gap-2"
+                  >
+                    <BookOpenIcon size={16} />
+                    <span>Practice Mode</span>
+                  </button>
+                  <button
+                    onClick={() => transitionToInstructions("All Subjects")}
+                    className="ssc-btn-primary flex items-center justify-center gap-2"
+                  >
+                    <TimerIcon size={16} />
+                    <span>Start Mock CBT</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Questions</p>
+                  <BookOpenIcon size={20} className="text-blue-500" />
+                </div>
+                <p className="text-3xl font-extrabold mt-2 text-gray-900">{dashboardStats.totalQuestions}</p>
+                <p className="text-xs text-gray-400 mt-1">Active in database</p>
+              </div>
+
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Attempts</p>
+                  <TrophyIcon size={20} className="text-purple-500" />
+                </div>
+                <p className="text-3xl font-extrabold mt-2 text-gray-900">{dashboardStats.totalAttempts}</p>
+                <p className="text-xs text-gray-400 mt-1">Tests completed</p>
+              </div>
+
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Accuracy</p>
+                  <ChartIcon size={20} className="text-green-500" />
+                </div>
+                <p className="text-3xl font-extrabold mt-2 text-gray-900">{dashboardStats.averageAccuracy}%</p>
+                <p className="text-xs text-gray-400 mt-1">Average score</p>
+              </div>
+
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Categories</p>
+                  <DashboardIcon size={20} className="text-orange-500" />
+                </div>
+                <p className="text-3xl font-extrabold mt-2 text-gray-900">{Object.keys(dashboardStats.categoryStats).length}</p>
+                <p className="text-xs text-gray-400 mt-1">Subject areas</p>
+              </div>
+            </div>
+
+            {/* Available Mock Test Papers (Unified Quiz Cards) */}
+            <div className="space-y-4 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <TrophyIcon size={20} className="text-indigo-600 animate-pulse" />
+                    Available Mock Test Papers (उपलब्ध मॉक टेस्ट पेपर्स)
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Select an uploaded question paper to practice, launch in timed CBT mode, or delete a specific batch.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-72">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs text-gray-400">
+                      🔍
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="पेपर, विषय या प्रश्न खोजें (Universal Search)..."
+                      value={universalSearch}
+                      onChange={(e) => setUniversalSearch(e.target.value)}
+                      className="w-full text-xs pl-9 pr-8 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400 text-gray-800"
+                    />
+                    {universalSearch && (
+                      <button
+                        onClick={() => setUniversalSearch("")}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full shadow-sm shrink-0">
+                    {filteredQuizzes.length} Papers
+                  </span>
+                </div>
+              </div>
+
+              {quizzes.length === 0 ? (
+                <div className="glass-premium rounded-2xl p-10 text-center text-gray-400 border border-dashed border-gray-200 bg-gray-50/50">
+                  <BookOpenIcon size={40} className="mx-auto text-gray-300 mb-3" />
+                  <p className="text-sm font-semibold text-gray-600">No question papers found in the database.</p>
+                  <p className="text-xs text-gray-400 mt-1">Use the Database panel above to manually add or upload via AI Bulk JSON Importer.</p>
+                </div>
+              ) : filteredQuizzes.length === 0 ? (
+                <div className="glass-premium rounded-2xl p-8 text-center text-gray-500 border border-indigo-100 bg-indigo-50/10">
+                  <div className="text-3xl mb-2">🔍</div>
+                  <p className="text-sm font-semibold text-gray-700">कोई मैचिंग पेपर या प्रश्न नहीं मिला</p>
+                  <p className="text-xs text-gray-400 mt-1">आपकी खोज "{universalSearch}" के लिए कोई परिणाम नहीं मिला। कृपया दूसरा शब्द खोजें।</p>
+                  <button
+                    onClick={() => setUniversalSearch("")}
+                    className="mt-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-all cursor-pointer shadow-sm shadow-indigo-500/20"
+                  >
+                    खोज साफ़ करें (Clear Search)
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredQuizzes.map((quiz) => {
+                    const categoriesList = Object.keys(quiz.categoryCounts);
+                    
+                    return (
+                      <div 
+                        key={quiz.batchId} 
+                        className="glass-premium rounded-2xl p-5 hover:shadow-xl hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between border border-indigo-50/50 bg-gradient-to-b from-white to-indigo-50/5 relative overflow-hidden group"
+                      >
+                        <div className="space-y-3">
+                          {/* Top Section */}
+                          <div className="flex justify-between items-start gap-2">
+                            {editingBatchId === quiz.batchId ? (
+                              <div className="flex-1 space-y-1.5 mr-2">
+                                <input
+                                  type="text"
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  className="w-full text-xs font-bold p-1 px-2 rounded-lg border border-indigo-300 outline-none focus:ring-1 focus:ring-indigo-500/50"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleRenameQuiz(quiz.name, quiz.batchId);
+                                    if (e.key === "Escape") setEditingBatchId(null);
+                                  }}
+                                />
+                                <div className="flex gap-1.5">
+                                  <button
+                                    onClick={() => handleRenameQuiz(quiz.name, quiz.batchId)}
+                                    className="text-[9px] font-bold px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded cursor-pointer"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingBatchId(null)}
+                                    className="text-[9px] font-bold px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex-1 group/title relative pr-6">
+                                <h4 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug group-hover:text-indigo-700 transition-colors">
+                                  {quiz.name}
+                                </h4>
+                                {quiz.createdAt && (
+                                  <p className="text-[10px] text-indigo-500 font-semibold mt-0.5">
+                                    📅 Uploaded: {formatDate(quiz.createdAt)}
+                                  </p>
+                                )}
+                                {/* Inline Pencil Edit Button */}
+                                <button
+                                  onClick={() => {
+                                    setEditingBatchId(quiz.batchId);
+                                    setEditingName(quiz.name);
+                                  }}
+                                  title="Edit quiz title"
+                                  className="absolute right-0 top-0.5 opacity-0 group-hover/title:opacity-100 p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition-all cursor-pointer"
+                                >
+                                  <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    width="12" 
+                                    height="12" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                            <span className="shrink-0 inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-extrabold text-indigo-700 border border-indigo-100/50 shadow-sm">
+                              {quiz.questions.length} Qs
+                            </span>
+                          </div>
+
+                          {/* Subject tags */}
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Subjects Covered</p>
+                            <div className="flex flex-wrap gap-1">
+                              {categoriesList.slice(0, 3).map((cat) => (
+                                <span 
+                                  key={cat} 
+                                  className="text-[9px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium truncate max-w-[120px]"
+                                  title={cat}
+                                >
+                                  {cat.split(' & ')[0]}
+                                </span>
+                              ))}
+                              {categoriesList.length > 3 && (
+                                <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-semibold">
+                                  +{categoriesList.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-1">
+                            <button
+                              onClick={() => startPractice("All Subjects", quiz.name, quiz.batchId)}
+                              className="text-[10px] font-extrabold px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                            >
+                              Practice
+                            </button>
+                            <button
+                              onClick={() => transitionToInstructions("All Subjects", quiz.name, quiz.batchId)}
+                              className="text-[10px] font-extrabold px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl transition-all shadow-md shadow-indigo-500/15 cursor-pointer flex-1 text-center"
+                            >
+                              Launch CBT
+                            </button>
+                          </div>
+                          
+                          {/* Rename/Edit Button */}
+                          <button
+                            onClick={() => {
+                              setEditingBatchId(quiz.batchId);
+                              setEditingName(quiz.name);
+                            }}
+                            title={`Rename "${quiz.name}"`}
+                            className="p-2 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 hover:text-indigo-700 rounded-xl transition-colors cursor-pointer border border-indigo-100 shadow-sm shrink-0"
+                          >
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              width="14" 
+                              height="14" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2.5" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+
+                          {/* Delete Paper Button */}
+                          <button
+                            onClick={() => handleDeleteQuiz(quiz.name, quiz.batchId)}
+                            title={`Delete "${quiz.name}" batch`}
+                            className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 rounded-xl transition-colors cursor-pointer border border-rose-100 shadow-sm shrink-0"
+                          >
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              width="14" 
+                              height="14" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2.5" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              <line x1="10" y1="11" x2="10" y2="17"></line>
+                              <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Exam Config + Subject-wise Practice */}
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+              
+              {/* Left: Quick Exam Launcher */}
+              <div className="glass-premium rounded-2xl p-6 space-y-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <TimerIcon size={20} className="text-blue-600" />
+                    Quick Exam Launcher
+                  </h3>
+                  <span className="text-xs text-gray-400">Configure & Start</span>
+                </div>
+
+                {/* Exam Config */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Questions Count */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Questions</label>
+                    <select
+                      value={mockQuestionLimit}
+                      onChange={(e) => setMockQuestionLimit(Number(e.target.value))}
+                      className="w-full rounded-lg p-2.5 text-sm glass-input"
+                    >
+                      <option value={10}>10 Questions</option>
+                      <option value={15}>15 Questions</option>
+                      <option value={25}>25 Questions</option>
+                      <option value={50}>50 Questions</option>
+                      <option value={100}>100 Questions</option>
+                      <option value={-1}>All Questions</option>
+                    </select>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                    <button
-                      onClick={() => setShowAdminPanel(!showAdminPanel)}
-                      className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-sm font-semibold py-3 px-6 transition-all flex items-center justify-center gap-2 text-white cursor-pointer shadow-lg shadow-indigo-500/25"
+                  {/* Category */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Subject</label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full rounded-lg p-2.5 text-sm glass-input"
                     >
-                      <PlusIcon size={18} />
-                      <span>{showAdminPanel ? "Close Admin Console" : "Add / Paste New Quiz Paper"}</span>
-                    </button>
+                      <option value="All Subjects">All Subjects (Mixed)</option>
+                      {activeCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Language */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Language</label>
+                    <select
+                      value={examLanguage}
+                      onChange={(e) => setExamLanguage(e.target.value as any)}
+                      className="w-full rounded-lg p-2.5 text-sm glass-input"
+                    >
+                      <option value="dual">Dual (English + Hindi)</option>
+                      <option value="english">English Only</option>
+                      <option value="hindi">Hindi Only</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Quizzes List (Catalog Grid) */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-extrabold flex items-center gap-2 text-white">
-                      <span className="h-3 w-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 animate-pulse"></span>
-                      Available CBT Exam Papers (उपलब्ध परीक्षा प्रश्न पत्र)
-                    </h3>
-                    <span className="text-xs text-slate-400 font-medium">Click any paper to enter its independent preparation room</span>
-                  </div>
+                {/* Launch Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button
+                    onClick={() => startPractice(selectedCategory)}
+                    className="ssc-btn-secondary flex-1 flex items-center justify-center gap-2"
+                  >
+                    <BookOpenIcon size={16} />
+                    Study / Practice (No Timer)
+                  </button>
+                  <button
+                    onClick={() => transitionToInstructions(selectedCategory)}
+                    className="ssc-btn-primary flex-1 flex items-center justify-center gap-2"
+                  >
+                    <TimerIcon size={16} />
+                    Start Timed Mock CBT
+                  </button>
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {quizzes.length === 0 ? (
-                      <div className="col-span-full glass-premium rounded-3xl p-12 text-center border border-dashed border-indigo-500/20 bg-indigo-950/5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-xl"></div>
-                        <BookOpenIcon size={48} className="mx-auto text-indigo-400/60 mb-4 animate-float" />
-                        <h4 className="text-lg font-bold text-white mb-2">डेटाबेस खाली है (Database is Empty)</h4>
-                        <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                          कोई परीक्षा पत्र लोड नहीं किया गया है। ऊपर <strong>Add / Paste New Quiz Paper</strong> बटन पर क्लिक करें और AI से जनरेटेड JSON इनपुट करें!
-                        </p>
+                {/* Subject-wise Cards */}
+                <div className="border-t border-gray-100 pt-4">
+                  <h4 className="text-sm font-bold text-gray-700 mb-3">Subject-wise Practice</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {Object.entries(dashboardStats.categoryStats).map(([catName, catData]) => (
+                      <div 
+                        key={catName}
+                        className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group cursor-pointer"
+                        onClick={() => startPractice(catName)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{catName}</p>
+                          <p className="text-xs text-gray-400">{catData.questionCount} questions</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {catData.accuracy > 0 && (
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                              catData.accuracy >= 70 ? "bg-green-50 text-green-600" : 
+                              catData.accuracy >= 40 ? "bg-yellow-50 text-yellow-600" : 
+                              "bg-red-50 text-red-600"
+                            }`}>
+                              {catData.accuracy}%
+                            </span>
+                          )}
+                          <ChevronRightIcon size={16} className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+                        </div>
                       </div>
-                    ) : (
-                      quizzes.map((quiz, idx) => {
-                        const borderColors = [
-                          "from-indigo-500/10 via-slate-900 to-purple-500/10 hover:border-indigo-500/30",
-                          "from-purple-500/10 via-slate-900 to-rose-500/10 hover:border-purple-500/30",
-                          "from-emerald-500/10 via-slate-900 to-teal-500/10 hover:border-emerald-500/30",
-                          "from-cyan-500/10 via-slate-900 to-blue-500/10 hover:border-cyan-500/30"
-                        ];
-                        const borderActive = borderColors[idx % borderColors.length];
-
-                        return (
-                          <div 
-                            key={quiz.name}
-                            className={`glass-premium rounded-3xl p-6 border border-white/5 hover:border-white/10 transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-gradient-to-br ${borderActive} shadow-lg`}
-                          >
-                            <div className="space-y-4">
-                              <div className="flex items-center justify-between">
-                                <span className="rounded-full bg-indigo-500/10 border border-indigo-500/25 px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-indigo-300 uppercase">
-                                  📝 MOCK EXAM PAPER
-                                </span>
-                                <span className="text-xs text-slate-400 font-bold bg-slate-950/60 px-2.5 py-1 rounded-lg border border-white/5">
-                                  {quiz.questions.length} Questions
-                                </span>
-                              </div>
-
-                              <div>
-                                <h4 className="text-base font-extrabold text-white tracking-tight leading-snug line-clamp-2">
-                                  {quiz.name}
-                                </h4>
-                                
-                                {/* Subject pills */}
-                                <div className="flex flex-wrap gap-1 mt-2.5">
-                                  {Object.entries(quiz.categoryCounts).map(([catName, qCount]) => (
-                                    <span key={catName} className="text-[9px] bg-white/5 border border-white/5 text-slate-300 px-2 py-0.5 rounded-md font-medium">
-                                      {catName.split(" ")[0]}: {qCount} Qs
-                                    </span>
-                                  ))}
-                                </div>
-
-                                {/* Difficulties distribution */}
-                                <div className="flex gap-2.5 mt-3 text-[10px] font-bold text-slate-400">
-                                  <span>Difficulties:</span>
-                                  {Array.from(quiz.difficulties).map(diff => {
-                                    let badgeColor = "text-emerald-400";
-                                    if (diff === "Medium") badgeColor = "text-amber-400";
-                                    if (diff === "Hard") badgeColor = "text-rose-400";
-                                    return (
-                                      <span key={diff} className={badgeColor}>
-                                        ● {diff}
-                                      </span>
-                                    );
-                                  })}
-                                </div>
-
-                                {/* Personal attempts report */}
-                                {(() => {
-                                  const quizAttempts = (stats?.recentAttempts || []).filter(
-                                    a => (a.quizName?.trim() || "Rajasthan Computer Instructor CBT Mock 1") === quiz.name
-                                  );
-                                  const attemptsCount = quizAttempts.length;
-                                  const highestScore = attemptsCount > 0 
-                                    ? Math.max(...quizAttempts.map(a => a.score)) 
-                                    : null;
-                                  const averageScore = attemptsCount > 0
-                                    ? Math.round(quizAttempts.reduce((acc, curr) => acc + curr.score, 0) / attemptsCount)
-                                    : null;
-
-                                  return (
-                                    <div className="mt-4 p-3 rounded-2xl bg-slate-950/40 border border-white/5 flex items-center justify-between text-xs text-slate-300 gap-4">
-                                      <div className="space-y-0.5">
-                                        <p className="text-[8px] text-slate-500 font-semibold uppercase tracking-wider">ATTEMPTS</p>
-                                        <p className="font-extrabold text-white">{attemptsCount} Times</p>
-                                      </div>
-                                      <div className="space-y-0.5 text-right">
-                                        <p className="text-[8px] text-slate-500 font-semibold uppercase tracking-wider">HIGHEST / AVG</p>
-                                        <p className="font-extrabold text-indigo-300">
-                                          {attemptsCount > 0 ? `${highestScore}% / ${averageScore}%` : "Not Attempted"}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-2 mt-6 pt-4 border-t border-white/5">
-                              <button
-                                onClick={() => {
-                                  setActiveQuizName(quiz.name);
-                                  setSelectedQuizName(quiz.name);
-                                }}
-                                className="flex-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-[10px] font-bold py-2.5 text-center text-white transition-all cursor-pointer"
-                              >
-                                Stats Hub
-                              </button>
-                              
-                              <button
-                                onClick={() => startPractice("All Subjects", quiz.name)}
-                                className="flex-1 rounded-full bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-500/20 text-[10px] font-bold py-2.5 text-center text-indigo-300 transition-all cursor-pointer"
-                              >
-                                Practice
-                              </button>
-
-                              <button
-                                onClick={() => transitionToInstructions("All Subjects", quiz.name)}
-                                className="flex-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-[10px] font-bold py-2.5 text-center text-white transition-all cursor-pointer shadow-md shadow-indigo-600/10"
-                              >
-                                CBT Mock
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
+                    ))}
                   </div>
                 </div>
               </div>
-            ) : (
-              /* 2. STATE B: AN ACTIVE QUIZ SELECTED -> SHOW QUIZ DASHBOARD HUB */
-              <div className="space-y-8">
-                
-                {/* Back Link Header */}
-                <div className="flex items-center justify-between">
-                  <button 
-                    onClick={() => {
-                      setActiveQuizName(null);
-                      setSelectedQuizName("All Quizzes");
-                    }}
-                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
-                  >
-                    <ChevronLeftIcon size={16} />
-                    <span>Back to Quiz Papers Catalog</span>
-                  </button>
 
-                  <span className="text-xs font-bold text-slate-400 bg-indigo-950/40 border border-indigo-500/20 px-3 py-1 rounded-full">
-                    Active Exam Hub: {activeQuizName}
-                  </span>
-                </div>
+              {/* Right: Recent Attempts */}
+              <div className="glass-premium rounded-2xl p-6 space-y-4">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900">
+                  <ClockIcon size={18} className="text-blue-600" />
+                  Recent Attempts
+                </h3>
 
-                {/* Header Hero Banner for Active Quiz */}
-                <div className="glass-premium rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                  
-                  <div className="space-y-3 max-w-2xl text-center md:text-left">
-                    <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 text-xs font-semibold tracking-wider text-indigo-300 uppercase">
-                      Rajasthan, DSSSB & KVS Computer Instructor Syllabus
-                    </span>
-                    <h2 className="text-2xl font-extrabold md:text-3xl text-white tracking-tight leading-tight">
-                      {activeQuizName}
-                    </h2>
-                    <p className="text-xs text-slate-300 max-w-xl">
-                      इस परीक्षा पत्र का सम्पूर्ण मॉक टेस्ट शुरू करें या व्यक्तिगत विषयों का अभ्यास करें। आपके आंकड़े केवल इसी पेपर से संबंधित हैं।
+                {dashboardStats.recentAttempts.length === 0 ? (
+                  <div className="rounded-2xl p-8 text-center text-gray-400 border border-dashed border-gray-200 bg-gray-50">
+                    <TrophyIcon size={40} className="mx-auto text-gray-300 mb-3" />
+                    <p className="text-sm font-medium text-gray-500">No attempts yet</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Take a mock test to see your results here
                     </p>
                   </div>
+                ) : (
+                  <div className="space-y-3">
+                    {dashboardStats.recentAttempts.map((attempt) => {
+                      const isGood = attempt.score >= 70;
+                      return (
+                        <div 
+                          key={attempt.id}
+                          className="rounded-xl p-4 flex items-center justify-between border-l-4 bg-white border border-gray-100 hover:shadow-sm transition-all"
+                          style={{ borderLeftColor: isGood ? "#22c55e" : "#ef4444" }}
+                        >
+                          <div className="space-y-1">
+                            <p className="text-xs font-bold text-gray-800 uppercase tracking-wider">{attempt.category}</p>
+                            <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                              <ClockIcon size={10} />
+                              <span>{formatDate(attempt.timestamp)}</span>
+                            </p>
+                          </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                    <button
-                      onClick={() => startPractice("All Subjects")}
-                      className="rounded-full bg-slate-800 hover:bg-slate-700 text-sm font-semibold py-3 px-6 border border-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/30 text-white"
-                    >
-                      <BookOpenIcon size={18} className="text-indigo-400" />
-                      <span>Start Full Practice</span>
-                    </button>
-                    <button
-                      onClick={() => transitionToInstructions("All Subjects")}
-                      className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-sm font-semibold py-3 px-6 transition-all flex items-center justify-center gap-2 text-white cursor-pointer shadow-lg shadow-indigo-500/25"
-                    >
-                      <TimerIcon size={18} />
-                      <span>Launch CBT Simulation</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Statistics Dashboard Segmented */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <BookOpenIcon size={48} className="text-indigo-400" />
-                    </div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Quiz Questions</p>
-                    <p className="text-3xl font-extrabold mt-2 text-white">{dashboardStats.totalQuestions}</p>
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-indigo-400">
-                      <span>Dynamic paper database active</span>
-                    </div>
-                  </div>
-
-                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-all">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <TrophyIcon size={48} className="text-purple-400" />
-                    </div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Paper Simulations</p>
-                    <p className="text-3xl font-extrabold mt-2 text-white">{dashboardStats.totalAttempts}</p>
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-purple-400">
-                      <span>Attempts logged dynamically</span>
-                    </div>
-                  </div>
-
-                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <ChartIcon size={48} className="text-emerald-400" />
-                    </div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Paper Accuracy</p>
-                    <div className="flex items-baseline gap-2 mt-2">
-                      <p className="text-3xl font-extrabold text-white">{dashboardStats.averageAccuracy}%</p>
-                    </div>
-                    <div className="mt-3 w-full bg-slate-800 rounded-full h-1.5">
-                      <div 
-                        className="bg-emerald-400 h-1.5 rounded-full transition-all duration-500" 
-                        style={{ width: `${dashboardStats.averageAccuracy}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="glass rounded-3xl p-6 relative overflow-hidden group hover:border-amber-500/30 transition-all">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <TimerIcon size={48} className="text-amber-400" />
-                    </div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Paper Progress</p>
-                    <p className="text-3xl font-extrabold mt-2 text-white">
-                      {Math.min(100, Math.round((dashboardStats.totalQuestions / 40) * 100))}%
-                    </p>
-                    <div className="mt-3 flex items-center gap-1 text-xs text-slate-400">
-                      <span>Goal: 40+ Core Questions</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Main Content Grid: Categories & History segmented */}
-                <div className="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-8">
-                  
-                  {/* Subject Module List */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-bold flex items-center gap-2 text-white">
-                        <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                        Syllabus Subject Modules (विषय मॉड्यूल)
-                      </h3>
-                      <span className="text-xs text-slate-400">Select subject to study in this paper</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {Object.keys(dashboardStats.categoryStats).length === 0 ? (
-                        <div className="col-span-full glass rounded-3xl p-8 text-center text-slate-400 border border-dashed border-white/10">
-                          No categories detected inside this paper.
+                          <div className="text-right">
+                            <p className={`text-sm font-extrabold ${isGood ? "text-green-600" : "text-red-500"}`}>{attempt.score}%</p>
+                            <p className="text-[9px] text-gray-400">
+                              {attempt.correctAnswersCount}/{attempt.totalQuestions} Correct
+                            </p>
+                          </div>
                         </div>
-                      ) : (
-                        Object.entries(dashboardStats.categoryStats).map(([catName, catStat], idx) => {
-                          const borderGlows = [
-                            "hover:border-indigo-500/30",
-                            "hover:border-purple-500/30",
-                            "hover:border-emerald-500/30",
-                            "hover:border-amber-500/30"
-                          ];
-                          const borderGlow = borderGlows[idx % borderGlows.length];
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
 
-                          return (
-                            <div 
-                              key={catName}
-                              className={`glass rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group flex flex-col justify-between border border-white/5 ${borderGlow}`}
-                            >
-                              <div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest bg-indigo-500/5 border border-indigo-500/10 px-2 py-0.5 rounded-md">
-                                    Subject Module
-                                  </span>
-                                  <span className="text-xs text-slate-400 font-medium">
-                                    {catStat.questionCount} Questions
-                                  </span>
-                                </div>
-                                
-                                <h4 className="text-sm font-bold text-white mt-3 group-hover:text-indigo-300 transition-colors">
-                                  {catName}
-                                </h4>
-                                
-                                {catStat.solvedCount > 0 && (
-                                  <div className="mt-3 space-y-1">
-                                    <div className="flex items-center justify-between text-[10px] text-slate-400">
-                                      <span>Subject Accuracy</span>
-                                      <span className="font-semibold text-emerald-400">{catStat.accuracy}%</span>
-                                    </div>
-                                    <div className="w-full bg-slate-800 rounded-full h-1">
-                                      <div 
-                                        className="bg-emerald-400 h-1 rounded-full"
-                                        style={{ width: `${catStat.accuracy}%` }}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+          </div>
+        )}
 
-                              <div className="flex items-center gap-2 mt-6">
-                                <button
-                                  onClick={() => startPractice(catName)}
-                                  className="flex-1 rounded-full bg-slate-800 hover:bg-indigo-600 hover:text-white text-xs font-semibold py-2 px-3 border border-white/5 transition-all cursor-pointer text-slate-300 text-center"
-                                >
-                                  Study Subject
-                                </button>
-                                <button
-                                  onClick={() => transitionToInstructions(catName)}
-                                  className="rounded-full bg-indigo-600/20 hover:bg-indigo-600 text-indigo-200 hover:text-white text-xs font-semibold p-2 border border-indigo-500/20 transition-all cursor-pointer flex items-center justify-center"
-                                  title="Start Mock Exam"
-                                >
-                                  <TimerIcon size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
+
+        {/* ========================================================================= */}
+        {/* VIEW 1.45: INTERACTIVE SYLLABUS CHECKLIST & TRACKER */}
+        {/* ========================================================================= */}
+        {view === "syllabus" && (
+          <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
+            
+            {/* Header / Breadcrumbs */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <button 
+                  onClick={() => setView("dashboard")}
+                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer mb-2"
+                >
+                  <ChevronLeftIcon size={16} />
+                  <span>Dashboard पर वापस जाएँ</span>
+                </button>
+                <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                  <span>बेसिक कम्प्यूटर अनुदेशक पाठ्यक्रम</span>
+                  <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                    Syllabus Tracker
+                  </span>
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  RSMSSB Basic Computer Instructor (CBT Exam) Detailed Syllabus & Progress Checklist
+                </p>
+              </div>
+
+              {/* Utility Tools */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm animate-pulse-slow"
+                >
+                  🖨️ Print / Save PDF
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm("क्या आप अपनी पूरी प्रोग्रेस को रीसेट करना चाहते हैं?")) {
+                      setCompletedTopics([]);
+                      localStorage.removeItem("completed_syllabus_topics");
+                    }
+                  }}
+                  className="rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                >
+                  🔄 Reset Progress
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Overall Progress */}
+              <div className="glass-premium rounded-2xl p-5 border border-indigo-100/50 shadow-indigo-100/10 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">कुल प्रगति (Overall Progress)</span>
+                    <span className="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
+                      {totalTopics > 0 ? Math.round((completedTotalCount / totalTopics) * 100) : 0}%
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800">
+                    {completedTotalCount} <span className="text-sm font-medium text-slate-400">/ {totalTopics} sub-topics</span>
+                  </h3>
+                </div>
+                <div className="mt-4">
+                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-full rounded-full transition-all duration-500 ease-out" 
+                      style={{ width: `${totalTopics > 0 ? (completedTotalCount / totalTopics) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Paper 1 Progress */}
+              <div className="glass-premium rounded-2xl p-5 border border-emerald-100/50 shadow-emerald-100/10 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Paper I Progress</span>
+                    <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      {totalPaper1Topics > 0 ? Math.round((completedPaper1Count / totalPaper1Topics) * 100) : 0}%
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800">
+                    {completedPaper1Count} <span className="text-sm font-medium text-slate-400">/ {totalPaper1Topics} sub-topics</span>
+                  </h3>
+                </div>
+                <div className="mt-4">
+                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-500 ease-out" 
+                      style={{ width: `${totalPaper1Topics > 0 ? (completedPaper1Count / totalPaper1Topics) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Paper 2 Progress */}
+              <div className="glass-premium rounded-2xl p-5 border border-sky-100/50 shadow-sky-100/10 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-sky-600">Paper II Progress</span>
+                    <span className="text-xs font-extrabold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full">
+                      {totalPaper2Topics > 0 ? Math.round((completedPaper2Count / totalPaper2Topics) * 100) : 0}%
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800">
+                    {completedPaper2Count} <span className="text-sm font-medium text-slate-400">/ {totalPaper2Topics} sub-topics</span>
+                  </h3>
+                </div>
+                <div className="mt-4">
+                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-sky-500 to-blue-600 h-full rounded-full transition-all duration-500 ease-out" 
+                      style={{ width: `${totalPaper2Topics > 0 ? (completedPaper2Count / totalPaper2Topics) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Main Tabs & Search Toolbar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-3">
+              <div className="flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl w-full md:w-auto">
+                <button
+                  onClick={() => setActiveSyllabusTab("overview")}
+                  className={`flex-1 md:flex-initial text-center text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer ${
+                    activeSyllabusTab === "overview" 
+                      ? "bg-white text-indigo-750 shadow-sm border border-slate-200/40" 
+                      : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                  }`}
+                >
+                  📋 Exam Plan & Summary
+                </button>
+                <button
+                  onClick={() => setActiveSyllabusTab("paper1")}
+                  className={`flex-1 md:flex-initial text-center text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer ${
+                    activeSyllabusTab === "paper1" 
+                      ? "bg-white text-indigo-750 shadow-sm border border-slate-200/40" 
+                      : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                  }`}
+                >
+                  📄 Paper I (General)
+                </button>
+                <button
+                  onClick={() => setActiveSyllabusTab("paper2")}
+                  className={`flex-1 md:flex-initial text-center text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer ${
+                    activeSyllabusTab === "paper2" 
+                      ? "bg-white text-indigo-750 shadow-sm border border-slate-200/40" 
+                      : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                  }`}
+                >
+                  💻 Paper II (Technical)
+                </button>
+              </div>
+
+              {/* Search Bar - Hidden on Overview tab */}
+              {activeSyllabusTab !== "overview" && (
+                <div className="relative w-full md:w-80">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs text-gray-400">
+                    🔍
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="विषय या टॉपिक खोजें (e.g. DBMS, C++)..."
+                    value={syllabusSearch}
+                    onChange={(e) => setSyllabusSearch(e.target.value)}
+                    className="w-full text-xs pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400 text-gray-800"
+                  />
+                  {syllabusSearch && (
+                    <button
+                      onClick={() => setSyllabusSearch("")}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* TAB CONTENT: 1. OVERVIEW */}
+            {activeSyllabusTab === "overview" && (
+              <div className="space-y-6">
+                
+                {/* Exam Plan details Table */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="bg-gradient-to-r from-slate-800 to-indigo-900 px-6 py-4">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>📋 CBT परीक्षा योजना (Computer Based Test Exam Plan)</span>
+                    </h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                          <th className="px-6 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">प्रश्न-पत्र</th>
+                          <th className="px-6 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">मुख्य विषय</th>
+                          <th className="px-6 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">कुल प्रश्न</th>
+                          <th className="px-6 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">कुल अंक</th>
+                          <th className="px-6 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">समय अवधि</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        <tr className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4 text-xs font-bold text-slate-800 whitespace-nowrap">Paper I</td>
+                          <td className="px-6 py-4 text-xs text-slate-600 max-w-md">
+                            राजस्थान कला, संस्कृति, इतिहास, भूगोल, सामान्य विज्ञान, समसामयिक मामले (Current Affairs), रीजनिंग (Reasoning), गणित (Mathematics)
+                          </td>
+                          <td className="px-6 py-4 text-xs font-semibold text-slate-700 text-center">100 प्रश्न</td>
+                          <td className="px-6 py-4 text-xs font-semibold text-slate-700 text-center">100 अंक</td>
+                          <td className="px-6 py-4 text-xs font-semibold text-slate-700 text-center">2 घंटे (120 मिनट)</td>
+                        </tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4 text-xs font-bold text-slate-800 whitespace-nowrap">Paper II</td>
+                          <td className="px-6 py-4 text-xs text-slate-600 max-w-md">
+                            शिक्षा शास्त्र (Pedagogy), बौद्धिक योग्यता (Intellectual Ability), Computer Fundamentals, Data Processing, Programming, Data Structures, OS, Networking, Security, DBMS, System Analysis, IoT & Web Tech
+                          </td>
+                          <td className="px-6 py-4 text-xs font-semibold text-slate-700 text-center">100 प्रश्न</td>
+                          <td className="px-6 py-4 text-xs font-semibold text-slate-700 text-center">100 अंक</td>
+                          <td className="px-6 py-4 text-xs font-semibold text-slate-700 text-center">2 घंटे (120 मिनट)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="bg-amber-50/70 border-t border-amber-100 p-4 flex gap-2.5 items-start">
+                    <span className="text-base">⚠️</span>
+                    <div>
+                      <p className="text-xs font-semibold text-amber-800">महत्वपूर्ण नोट (Negative Marking):</p>
+                      <p className="text-[11px] text-amber-700 mt-0.5">
+                        सभी प्रश्न बहुविकल्पी (MCQs) होंगे। प्रत्येक गलत उत्तर के लिए <strong>1/3 (एक-तिहाई) अंक</strong> काटे जाएंगे। परीक्षा उत्तीर्ण करने के लिए न्यूनतम अर्हक अंक (Qualifying Marks) 40% है।
+                      </p>
                     </div>
                   </div>
+                </div>
 
-                  {/* Sidebar Attempts for Active Quiz */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold flex items-center gap-2 text-white">
-                      <ClockIcon size={18} className="text-indigo-400" />
-                      Paper Mock Logs (हाल के प्रयास)
-                    </h3>
-
-                    {dashboardStats.recentAttempts.length === 0 ? (
-                      <div className="glass rounded-3xl p-8 text-center text-slate-500 border border-dashed border-white/10">
-                        <TrophyIcon size={40} className="mx-auto text-slate-600 mb-3" />
-                        <p className="text-sm font-medium">No attempts logged for this paper</p>
-                        <p className="text-xs text-slate-600 mt-1">
-                          Simulate CBT mock tests to track scores.
-                        </p>
+                {/* Subject Summary Progress Grid */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">विषयवार प्रगति (Subject-wise Summary)</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {/* Paper 1 Subjects list */}
+                    <div className="glass-premium rounded-2xl p-5 border border-slate-100 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h5 className="text-xs font-bold text-emerald-800 uppercase tracking-wide flex items-center gap-1.5">
+                          <span>📄 Paper I Subjects</span>
+                        </h5>
+                        <button 
+                          onClick={() => setActiveSyllabusTab("paper1")}
+                          className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                        >
+                          विस्तार से देखें →
+                        </button>
                       </div>
-                    ) : (
                       <div className="space-y-3">
-                        {dashboardStats.recentAttempts.map((attempt) => {
-                          const isGood = attempt.score >= 70;
+                        {SYLLABUS_DATA.paper1.map((sub, idx) => {
+                          const subDone = sub.topics.filter(t => completedTopics.includes(t)).length;
+                          const pct = sub.topics.length > 0 ? Math.round((subDone / sub.topics.length) * 100) : 0;
                           return (
                             <div 
-                              key={attempt.id}
-                              className="glass rounded-2xl p-4 flex items-center justify-between border-l-2 hover:border-white/20 transition-colors"
-                              style={{ borderLeftColor: isGood ? "#10b981" : "#f43f5e" }}
+                              key={idx}
+                              onClick={() => {
+                                setActiveSyllabusTab("paper1");
+                                setTimeout(() => {
+                                  const el = document.getElementById(`sub-paper1-${idx}`);
+                                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 100);
+                              }}
+                              className="group flex flex-col p-2.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all cursor-pointer"
                             >
-                              <div className="space-y-1">
-                                <p className="text-xs font-bold text-white uppercase tracking-wider">{attempt.category}</p>
-                                <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                                  <ClockIcon size={10} />
-                                  <span>{formatDate(attempt.timestamp)}</span>
-                                </p>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-semibold text-slate-700 group-hover:text-indigo-600 flex items-center gap-1.5">
+                                  <span>{sub.emoji}</span>
+                                  <span>{sub.title}</span>
+                                </span>
+                                <span className="font-extrabold text-slate-500 group-hover:text-slate-700">
+                                  {subDone}/{sub.topics.length} ({pct}%)
+                                </span>
                               </div>
-
-                              <div className="text-right">
-                                <p className="text-sm font-extrabold text-white">{attempt.score}%</p>
-                                <p className="text-[9px] text-slate-400">
-                                  {attempt.correctAnswersCount}/{attempt.totalQuestions} Right
-                                </p>
+                              <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                                <div 
+                                  className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                                  style={{ width: `${pct}%` }}
+                                />
                               </div>
                             </div>
                           );
                         })}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
+                    {/* Paper 2 Subjects list */}
+                    <div className="glass-premium rounded-2xl p-5 border border-slate-100 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h5 className="text-xs font-bold text-sky-800 uppercase tracking-wide flex items-center gap-1.5">
+                          <span>💻 Paper II Subjects</span>
+                        </h5>
+                        <button 
+                          onClick={() => setActiveSyllabusTab("paper2")}
+                          className="text-[10px] font-bold text-sky-600 hover:text-sky-700 hover:underline cursor-pointer"
+                        >
+                          विस्तार से देखें →
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        {SYLLABUS_DATA.paper2.map((sub, idx) => {
+                          const subDone = sub.topics.filter(t => completedTopics.includes(t)).length;
+                          const pct = sub.topics.length > 0 ? Math.round((subDone / sub.topics.length) * 100) : 0;
+                          return (
+                            <div 
+                              key={idx}
+                              onClick={() => {
+                                setActiveSyllabusTab("paper2");
+                                setTimeout(() => {
+                                  const el = document.getElementById(`sub-paper2-${idx}`);
+                                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 100);
+                              }}
+                              className="group flex flex-col p-2.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all cursor-pointer"
+                            >
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-semibold text-slate-700 group-hover:text-indigo-600 flex items-center gap-1.5">
+                                  <span>{sub.emoji}</span>
+                                  <span>{sub.title}</span>
+                                </span>
+                                <span className="font-extrabold text-slate-500 group-hover:text-slate-700">
+                                  {subDone}/{sub.topics.length} ({pct}%)
+                                </span>
+                              </div>
+                              <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                                <div 
+                                  className="bg-sky-500 h-full rounded-full transition-all duration-300"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
 
               </div>
             )}
 
-            {/* Active Question Library Section */}
-            <div className="pt-8 border-t border-white/5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                  Active Question Database (सक्रिय प्रश्न डेटाबेस)
-                </h3>
-                <span className="text-xs text-slate-400 font-semibold bg-slate-800 px-3 py-1 rounded-full border border-white/5">
-                  {questions.length} Active Questions
-                </span>
-              </div>
-
-              {questions.length === 0 ? (
-                <div className="glass rounded-3xl p-10 text-center border border-dashed border-white/10 text-slate-500">
-                  <BookOpenIcon size={40} className="mx-auto text-slate-600 mb-3" />
-                  <p className="text-sm font-semibold">No custom questions in database.</p>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Use the compiler tabs above to add manual questions or paste AI generated question lists!
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {questions.map((q, idx) => (
-                    <div 
-                      key={q.id}
-                      className="glass rounded-2xl p-5 border border-white/5 flex flex-col justify-between hover:border-white/10 transition-colors"
+            {/* TAB CONTENT: 2. PAPER I (GENERAL) */}
+            {activeSyllabusTab === "paper1" && (
+              <div>
+                {filteredPaper1.length === 0 ? (
+                  <div className="text-center py-12 glass-premium rounded-2xl border border-dashed border-gray-200">
+                    <p className="text-sm text-gray-500">खोजे गए टॉपिक के लिए कोई विषय नहीं मिला।</p>
+                    <button
+                      onClick={() => setSyllabusSearch("")}
+                      className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer"
                     >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                            {q.category}
-                          </span>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${
-                              q.difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                              q.difficulty === "Medium" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                              "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            }`}>
-                              {q.difficulty}
-                            </span>
-                            <button
-                              onClick={() => handleDeleteQuestion(q.id)}
-                              className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all cursor-pointer"
-                              title="Delete Question"
-                            >
-                              <XIcon size={14} />
-                            </button>
+                      खोज साफ़ करें
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {filteredPaper1.map((sub, idx) => {
+                      const doneCount = sub.topics.filter(t => completedTopics.includes(t)).length;
+                      const totalCount = sub.topics.length;
+                      const percent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+                      
+                      return (
+                        <div 
+                          key={idx}
+                          id={`sub-paper1-${idx}`}
+                          className="glass-premium rounded-2xl p-5 border border-slate-100 hover:border-indigo-100 hover:shadow-lg transition-all flex flex-col justify-between"
+                        >
+                          <div className="space-y-4">
+                            
+                            {/* Subject Header */}
+                            <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span className="text-base">{sub.emoji}</span>
+                                  <span>{sub.title}</span>
+                                </h4>
+                                <p className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 mt-1.5 inline-block">
+                                  {doneCount} of {totalCount} completed ({percent}%)
+                                </p>
+                              </div>
+
+                              {/* Batch Selection Utility */}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => selectAllTopics(sub.topics)}
+                                  className="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                                >
+                                  सभी चुनें
+                                </button>
+                                <button
+                                  onClick={() => clearAllTopics(sub.topics)}
+                                  className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 hover:bg-slate-105 px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                                >
+                                  साफ़ करें
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Subject Progress Bar */}
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                              <div 
+                                className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+
+                            {/* Subtopics Checklist */}
+                            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                              {sub.topics.map((topic, tIdx) => {
+                                const isChecked = completedTopics.includes(topic);
+                                return (
+                                  <label 
+                                    key={tIdx}
+                                    className={`flex items-start gap-2.5 p-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-all border border-transparent ${
+                                      isChecked ? "bg-indigo-50/10 border-indigo-50" : ""
+                                    }`}
+                                  >
+                                    <input 
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleTopicCompletion(topic)}
+                                      className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20 focus:outline-none cursor-pointer"
+                                    />
+                                    <span className={`text-xs leading-normal ${
+                                      isChecked ? "line-through text-slate-400 font-medium" : "text-slate-700 font-semibold"
+                                    }`}>
+                                      {topic}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+
                           </div>
                         </div>
-                        <p className="text-sm font-bold text-white leading-relaxed mt-3">
-                          {idx + 1}. {q.question}
-                        </p>
-                      </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT: 3. PAPER II (TECHNICAL) */}
+            {activeSyllabusTab === "paper2" && (
+              <div>
+                {filteredPaper2.length === 0 ? (
+                  <div className="text-center py-12 glass-premium rounded-2xl border border-dashed border-gray-200">
+                    <p className="text-sm text-gray-500">खोजे गए टॉपिक के लिए कोई विषय नहीं मिला।</p>
+                    <button
+                      onClick={() => setSyllabusSearch("")}
+                      className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer"
+                    >
+                      खोज साफ़ करें
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {filteredPaper2.map((sub, idx) => {
+                      const doneCount = sub.topics.filter(t => completedTopics.includes(t)).length;
+                      const totalCount = sub.topics.length;
+                      const percent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
                       
-                      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
-                        <span>{q.options.length} options</span>
-                        <span className="text-emerald-400 font-semibold">
-                          Ans: {String.fromCharCode(65 + q.answerIndex)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                      return (
+                        <div 
+                          key={idx}
+                          id={`sub-paper2-${idx}`}
+                          className="glass-premium rounded-2xl p-5 border border-slate-100 hover:border-indigo-100 hover:shadow-lg transition-all flex flex-col justify-between"
+                        >
+                          <div className="space-y-4">
+                            
+                            {/* Subject Header */}
+                            <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span className="text-base">{sub.emoji}</span>
+                                  <span>{sub.title}</span>
+                                </h4>
+                                <p className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 mt-1.5 inline-block">
+                                  {doneCount} of {totalCount} completed ({percent}%)
+                                </p>
+                              </div>
+
+                              {/* Batch Selection Utility */}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => selectAllTopics(sub.topics)}
+                                  className="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                                >
+                                  सभी चुनें
+                                </button>
+                                <button
+                                  onClick={() => clearAllTopics(sub.topics)}
+                                  className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 hover:bg-slate-105 px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                                >
+                                  साफ़ करें
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Subject Progress Bar */}
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                              <div 
+                                className="bg-indigo-500 h-full rounded-full transition-all duration-300"
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+
+                            {/* Subtopics Checklist */}
+                            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                              {sub.topics.map((topic, tIdx) => {
+                                const isChecked = completedTopics.includes(topic);
+                                return (
+                                  <label 
+                                    key={tIdx}
+                                    className={`flex items-start gap-2.5 p-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-all border border-transparent ${
+                                      isChecked ? "bg-indigo-50/10 border-indigo-50" : ""
+                                    }`}
+                                  >
+                                    <input 
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleTopicCompletion(topic)}
+                                      className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20 focus:outline-none cursor-pointer"
+                                    />
+                                    <span className={`text-xs leading-normal ${
+                                      isChecked ? "line-through text-slate-400 font-medium" : "text-slate-700 font-semibold"
+                                    }`}>
+                                      {topic}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
           </div>
         )}
+
 
         {/* ========================================================================= */}
         {/* VIEW 1.5: TCS iON PRE-EXAM INSTRUCTIONS PORTAL */}
@@ -1937,13 +3119,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             <div className="flex items-center justify-between">
               <button 
                 onClick={() => setView("dashboard")}
-                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 <ChevronLeftIcon size={16} />
                 <span>Exit Exam Portal</span>
               </button>
               
-              <span className="text-xs font-bold text-slate-400 bg-slate-900 border border-white/10 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold text-slate-700 bg-gray-100 border border-gray-200 px-3 py-1 rounded-full">
                 Test Room: {selectedCategory}
               </span>
             </div>
@@ -1952,20 +3134,20 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 items-start">
               
               {/* Left Column: Official CBT Instructions */}
-              <div className="glass-premium rounded-3xl p-6 md:p-8 space-y-6 border border-white/10 relative overflow-hidden">
+              <div className="glass-premium rounded-3xl p-6 md:p-8 space-y-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-xl pointer-events-none"></div>
                 
                 <div>
-                  <h2 className="text-xl font-extrabold text-white">परीक्षा निर्देश (Candidate Exam Instructions)</h2>
-                  <p className="text-xs text-slate-400 mt-1">Please read the following instructions carefully before starting the exam.</p>
+                  <h2 className="text-xl font-extrabold text-slate-800">परीक्षा निर्देश (Candidate Exam Instructions)</h2>
+                  <p className="text-xs text-slate-500 mt-1">Please read the following instructions carefully before starting the exam.</p>
                 </div>
 
                 {/* Instructions Text list */}
-                <div className="space-y-4 text-xs text-slate-300 leading-relaxed border-t border-white/5 pt-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4 text-xs text-slate-700 leading-relaxed border-t border-gray-100 pt-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
                   
                   <div className="space-y-1">
-                    <h4 className="font-bold text-indigo-300">1. General Instructions (सामान्य निर्देश):</h4>
-                    <ul className="list-disc list-inside space-y-1 text-slate-400 pl-2">
+                    <h4 className="font-bold text-indigo-700">1. General Instructions (सामान्य निर्देश):</h4>
+                    <ul className="list-disc list-inside space-y-1 text-slate-600 pl-2">
                       <li>The total duration of this examination is 10 minutes (600 seconds).</li>
                       <li>The clock will be set at the server. The countdown timer at the top of screen will show remaining time.</li>
                       <li>This examination consists of 10 Multiple-Choice Questions.</li>
@@ -1973,19 +3155,19 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   </div>
 
                   <div className="space-y-1">
-                    <h4 className="font-bold text-indigo-300">2. Evaluation & Negative Marking (मूल्यांकन और 5-विकल्प नकारात्मक अंकन):</h4>
-                    <ul className="list-disc list-inside space-y-1 text-slate-400 pl-2">
-                      <li>Each correct answer will award <strong className="text-emerald-400">+1.00 mark</strong>.</li>
-                      <li>Selecting any wrong option (A, B, C, D) attracts <strong className="text-rose-400">-0.33 marks</strong> penalty (1/3 negative).</li>
+                    <h4 className="font-bold text-indigo-700">2. Evaluation & Negative Marking (मूल्यांकन और 5-विकल्प नकारात्मक अंकन):</h4>
+                    <ul className="list-disc list-inside space-y-1 text-slate-600 pl-2">
+                      <li>Each correct answer will award <strong className="text-emerald-600 font-bold">+1.00 mark</strong>.</li>
+                      <li>Selecting any wrong option (A, B, C, D) attracts <strong className="text-rose-600 font-bold">-0.33 marks</strong> penalty (1/3 negative).</li>
                       <li>If you do not want to attempt, you **MUST select Option E (Question Not Attempted / अनुत्तरित प्रश्न)** to receive **0.00 marks** (no penalty).</li>
-                      <li>Rajasthan Board Penalty: Leaving a question **completely blank** (not choosing A, B, C, D, OR E) will attract <strong className="text-rose-400">-0.33 marks</strong> penalty!</li>
+                      <li>Rajasthan Board Penalty: Leaving a question **completely blank** (not choosing A, B, C, D, OR E) will attract <strong className="text-rose-600 font-bold">-0.33 marks</strong> penalty!</li>
                     </ul>
                   </div>
 
                   <div className="space-y-1">
-                    <h4 className="font-bold text-indigo-300">3. Navigation Symbols Legend (नेविगेशन प्रतीक):</h4>
-                    <p className="text-slate-400 mb-2">You can see the following colored symbols in your sidebar matrix panel:</p>
-                    <div className="grid grid-cols-2 gap-2 pl-2 text-[10px]">
+                    <h4 className="font-bold text-indigo-700">3. Navigation Symbols Legend (नेविगेशन प्रतीक):</h4>
+                    <p className="text-slate-600 mb-2">You can see the following colored symbols in your sidebar matrix panel:</p>
+                    <div className="grid grid-cols-2 gap-2 pl-2 text-[10px] text-slate-600 font-semibold">
                       <div className="flex items-center gap-2">
                         <span className="h-5 w-5 rounded bg-emerald-500 flex items-center justify-center text-white text-[9px] font-bold">1</span>
                         <span>Answered (हल किया गया)</span>
@@ -1995,11 +3177,11 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                         <span>Marked for Review (समीक्षा के लिए)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="h-5 w-5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center text-[9px] font-bold">3</span>
+                        <span className="h-5 w-5 rounded bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center text-[9px] font-bold">3</span>
                         <span>Not Answered (प्रयास नहीं किया)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="h-5 w-5 rounded bg-slate-900 border border-white/10 text-slate-400 flex items-center justify-center text-[9px] font-bold">4</span>
+                        <span className="h-5 w-5 rounded bg-gray-50 border border-gray-200 text-gray-500 flex items-center justify-center text-[9px] font-bold">4</span>
                         <span>Not Visited (अभी तक नहीं देखा)</span>
                       </div>
                     </div>
@@ -2008,17 +3190,17 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 </div>
 
                 {/* Default Language & Length Selector Forms */}
-                <div className="pt-4 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   
                   {/* Language Selector */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-indigo-700 uppercase tracking-wider">
                       Exam Viewing Language (परीक्षा की भाषा):
                     </label>
                     <select
                       value={examLanguage}
                       onChange={(e) => setExamLanguage(e.target.value as any)}
-                      className="w-full rounded-xl p-3 text-xs bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                      className="w-full rounded-xl p-3 text-xs bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                     >
                       <option value="dual">Bilingual (Hindi + English दोनों)</option>
                       <option value="english">Strictly English (केवल अंग्रेजी)</option>
@@ -2028,13 +3210,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                   {/* Question Count Selector */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-indigo-700 uppercase tracking-wider">
                       Number of Questions (प्रश्नों की संख्या):
                     </label>
                     <select
                       value={mockQuestionLimit}
                       onChange={(e) => setMockQuestionLimit(Number(e.target.value))}
-                      className="w-full rounded-xl p-3 text-xs bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 cursor-pointer"
+                      className="w-full rounded-xl p-3 text-xs bg-white border border-gray-200 text-gray-800 outline-none focus:border-indigo-500 cursor-pointer"
                     >
                       <option value={10}>10 Questions</option>
                       <option value={15}>15 Questions (Default)</option>
@@ -2051,10 +3233,10 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               </div>
 
               {/* Right Column: Candidate Profile Box */}
-              <div className="glass rounded-3xl p-6 border border-white/5 space-y-6 text-center relative overflow-hidden">
+              <div className="glass rounded-3xl p-6 space-y-6 text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-lg pointer-events-none"></div>
                 
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-3">
+                <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest border-b border-gray-100 pb-3">
                   Candidate Dashboard
                 </h3>
 
@@ -2065,21 +3247,21 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-xs text-slate-400">Candidate Name:</p>
-                  <p className="text-sm font-bold text-white tracking-tight">pravinkumarverma</p>
+                  <p className="text-xs text-slate-500">Candidate Name:</p>
+                  <p className="text-sm font-bold text-slate-800 tracking-tight">pravinkumarverma</p>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-xs text-slate-400">Roll Number:</p>
-                  <p className="text-xs font-mono font-bold text-slate-300 tracking-wider">202605290035</p>
+                  <p className="text-xs text-slate-500">Roll Number:</p>
+                  <p className="text-xs font-mono font-bold text-slate-700 tracking-wider">202605290035</p>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-xs text-slate-400">Exam Subject:</p>
-                  <p className="text-xs font-bold text-indigo-300">{selectedCategory}</p>
+                  <p className="text-xs text-slate-500">Exam Subject:</p>
+                  <p className="text-xs font-bold text-indigo-600">{selectedCategory}</p>
                 </div>
 
-                <div className="pt-3 border-t border-white/5 text-[10px] text-slate-500">
+                <div className="pt-3 border-t border-gray-100 text-[10px] text-slate-500">
                   <p>System Terminal: Term-01</p>
                   <p>Server Connection: Connected (🟢)</p>
                 </div>
@@ -2089,7 +3271,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             </div>
 
             {/* Bottom Disclaimer Checklist bar */}
-            <div className="glass rounded-2xl p-5 border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="glass rounded-2xl p-5 border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
               <label className="flex items-start gap-3 cursor-pointer select-none max-w-2xl">
                 <input
                   type="checkbox"
@@ -2124,33 +3306,33 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             <div className="flex items-center justify-between">
               <button 
                 onClick={() => setView("dashboard")}
-                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 <ChevronLeftIcon size={16} />
                 <span>Quit Practice Room</span>
               </button>
               
-              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider bg-slate-800 px-3 py-1 rounded-full border border-white/5">
+              <span className="text-xs text-slate-700 font-semibold uppercase tracking-wider bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
                 {selectedCategory} (Practice Mode)
               </span>
             </div>
 
             {/* Main Question Card */}
             <div className="glass-premium rounded-3xl p-6 md:p-8 space-y-6 relative overflow-hidden">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="font-semibold text-indigo-400">
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span className="font-semibold text-indigo-600">
                   QUESTION {practiceIndex + 1} OF {practiceQuestions.length}
                 </span>
                 <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase ${
-                  practiceQuestions[practiceIndex].difficulty === "Easy" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                  practiceQuestions[practiceIndex].difficulty === "Medium" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                  "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                  practiceQuestions[practiceIndex].difficulty === "Easy" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                  practiceQuestions[practiceIndex].difficulty === "Medium" ? "bg-amber-100 text-amber-700 border border-amber-200" :
+                  "bg-rose-100 text-rose-700 border border-rose-200"
                 }`}>
                   {practiceQuestions[practiceIndex].difficulty}
                 </span>
               </div>
 
-              <h2 className="text-xl font-bold text-white leading-relaxed">
+              <h2 className="text-xl font-bold text-slate-850 leading-relaxed">
                 {practiceQuestions[practiceIndex].question}
               </h2>
 
@@ -2158,20 +3340,20 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               <div className="grid gap-3 pt-2">
                 {practiceQuestions[practiceIndex].options.map((option, optIdx) => {
                   const isSelected = practiceAnswers[practiceIndex] === optIdx;
+                  const optionStyle = isSelected
+                    ? "border-indigo-600 bg-indigo-50/70 text-indigo-800 shadow-sm"
+                    : "border-gray-200 bg-white text-gray-700 hover:border-indigo-400 hover:bg-indigo-50/30";
+                  const numStyle = isSelected
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-100 text-gray-500 border border-gray-200";
                   
                   return (
                     <button
                       key={optIdx}
                       onClick={() => selectPracticeOption(optIdx)}
-                      className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                        isSelected 
-                          ? "border-indigo-500 bg-indigo-500/15 text-indigo-200" 
-                          : "border-white/10 bg-slate-900/40 text-slate-300 hover:border-white/20 hover:bg-slate-900/60"
-                      }`}
+                      className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left text-sm font-semibold transition-all duration-200 cursor-pointer ${optionStyle}`}
                     >
-                      <span className={`h-6 w-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-                        isSelected ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400"
-                      }`}>
+                      <span className={`h-6 w-6 rounded-lg flex items-center justify-center text-xs font-bold ${numStyle}`}>
                         {String.fromCharCode(65 + optIdx)}
                       </span>
                       <span>{option}</span>
@@ -2186,7 +3368,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               <button
                 onClick={() => setPracticeIndex(prev => Math.max(0, prev - 1))}
                 disabled={practiceIndex === 0}
-                className="rounded-full border border-white/10 bg-slate-900/50 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-semibold px-5 py-2.5 flex items-center gap-1 transition-all text-slate-300 cursor-pointer"
+                className="rounded-full border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-semibold px-5 py-2.5 flex items-center gap-1 transition-all text-slate-700 cursor-pointer"
               >
                 <ChevronLeftIcon size={14} />
                 <span>Previous</span>
@@ -2194,7 +3376,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
               <button
                 onClick={handlePracticeSubmit}
-                className="rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs px-6 py-2.5 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+                className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-6 py-2.5 shadow-lg shadow-emerald-500/10 transition-all cursor-pointer"
               >
                 Submit Practice Exam
               </button>
@@ -2206,7 +3388,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   }
                 }}
                 disabled={practiceIndex === practiceQuestions.length - 1}
-                className="rounded-full bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-semibold px-5 py-2.5 flex items-center gap-1.5 transition-all text-slate-300 cursor-pointer"
+                className="rounded-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-semibold px-5 py-2.5 flex items-center gap-1.5 transition-all text-white cursor-pointer"
               >
                 <span>Next</span>
                 <ChevronRightIcon size={14} />
@@ -2223,36 +3405,36 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           <div className="flex flex-col gap-6 animate-fade-in min-h-[calc(100vh-140px)]">
             
             {/* Testbook Header Toolbar */}
-            <div className="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 border-b border-indigo-500/20">
+            <div className="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
                 <div>
-                  <h3 className="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-1.5">
+                  <h3 className="text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-1.5">
                     SSC CGL / KVS Computer Instructor Core Exam
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Section: {selectedCategory} CBT Practice</p>
+                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Section: {selectedCategory} CBT Practice</p>
                 </div>
               </div>
 
               {/* Middle Clock */}
               <div className="flex items-center gap-6">
-                <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 px-4 py-2 flex items-center gap-2">
-                  <TimerIcon size={16} className="text-rose-400 animate-pulse" />
-                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Time Left:</span>
-                  <span className="text-sm font-extrabold font-mono text-rose-300">{formatTimer(mockTimeLeft)}</span>
+                <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-2 flex items-center gap-2">
+                  <TimerIcon size={16} className="text-rose-600 animate-pulse" />
+                  <span className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Time Left:</span>
+                  <span className="text-sm font-extrabold font-mono text-rose-700">{formatTimer(mockTimeLeft)}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="lg:hidden rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold px-4 py-2 border border-white/5 transition-all cursor-pointer"
+                  className="lg:hidden rounded-xl bg-gray-100 hover:bg-gray-200 text-slate-700 text-xs font-bold px-4 py-2 border border-gray-200 transition-all cursor-pointer"
                 >
                   {mobileMenuOpen ? "Hide Grid" : "Show Grid"}
                 </button>
                 <button
                   onClick={handleMockSubmit}
-                  className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-5 py-2.5 shadow-lg shadow-emerald-500/10 transition-all cursor-pointer"
+                  className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-5 py-2.5 shadow-lg shadow-emerald-500/10 transition-all cursor-pointer"
                 >
                   Submit Test
                 </button>
@@ -2266,20 +3448,20 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               <div className="space-y-6">
                 
                 {/* Active Question Box */}
-                <div className="glass-premium rounded-3xl p-6 md:p-8 space-y-6 min-h-[320px] flex flex-col justify-between border border-white/5 relative">
+                <div className="glass-premium rounded-3xl p-6 md:p-8 space-y-6 min-h-[320px] flex flex-col justify-between relative">
                   
                   {/* Category and Index Bar */}
                   <div>
-                    <div className="flex items-center justify-between text-xs text-slate-400 mb-4">
-                      <span className="font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
+                      <span className="font-bold text-indigo-750 uppercase tracking-widest bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
                         Question {mockIndex + 1}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider bg-slate-800 px-2.5 py-0.5 rounded-full border border-white/5">
+                      <span className="text-[10px] text-slate-700 font-bold uppercase tracking-wider bg-gray-100 px-2.5 py-0.5 rounded-full border border-gray-200">
                         {mockQuestions[mockIndex].category}
                       </span>
                     </div>
 
-                    <h2 className="text-lg font-bold text-white leading-relaxed">
+                    <h2 className="text-lg font-bold text-slate-850 leading-relaxed">
                       {/* Regex dynamic translation filter for custom exam language view! */}
                       {filterQuestionText(mockQuestions[mockIndex].question, examLanguage)}
                     </h2>
@@ -2291,20 +3473,20 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       const isSelected = mockAnswers[mockIndex] === optIdx;
                       const isOptionE = optIdx === 4;
 
-                      let btnStyle = "border-white/10 bg-slate-900/40 text-slate-300 hover:border-white/20 hover:bg-slate-900/60";
-                      let numStyle = "bg-white/5 text-slate-400";
+                      let btnStyle = "border-gray-200 bg-white text-gray-700 hover:border-indigo-400 hover:bg-indigo-50/30";
+                      let numStyle = "bg-gray-100 text-gray-500 border border-gray-200";
 
                       if (isSelected) {
                         if (isOptionE) {
-                          btnStyle = "border-purple-500 bg-purple-500/15 text-purple-200 shadow-md shadow-purple-500/5";
-                          numStyle = "bg-purple-500 text-white";
+                          btnStyle = "border-purple-600 bg-purple-50/70 text-purple-805 shadow-sm";
+                          numStyle = "bg-purple-600 text-white";
                         } else {
-                          btnStyle = "border-indigo-500 bg-indigo-500/15 text-indigo-200 shadow-md shadow-indigo-500/5";
-                          numStyle = "bg-indigo-500 text-white";
+                          btnStyle = "border-indigo-600 bg-indigo-50/70 text-indigo-805 shadow-sm";
+                          numStyle = "bg-indigo-600 text-white";
                         }
                       } else if (isOptionE) {
-                        btnStyle = "border-purple-500/25 bg-purple-950/10 text-purple-300 hover:border-purple-500/40 hover:bg-purple-950/20";
-                        numStyle = "bg-purple-950/40 text-purple-300 border border-purple-500/20";
+                        btnStyle = "border-purple-200 bg-purple-50/30 text-purple-650 hover:border-purple-400 hover:bg-purple-50/60";
+                        numStyle = "bg-purple-100 text-purple-600 border border-purple-200";
                       }
 
                       return (
@@ -2325,19 +3507,19 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 </div>
 
                 {/* SSC Action Row Console */}
-                <div className="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 border border-white/5">
+                <div className="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={toggleMockMarkForReview}
-                      className="rounded-xl bg-purple-600/25 hover:bg-purple-600/40 text-purple-200 text-xs font-bold px-4 py-2.5 border border-purple-500/20 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold px-4 py-2.5 border border-purple-200 transition-all cursor-pointer flex items-center gap-1.5"
                     >
-                      <span className="h-1.5 w-1.5 rounded-full bg-purple-400"></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
                       <span>Mark for Review & Next</span>
                     </button>
 
                     <button
                       onClick={clearMockResponse}
-                      className="rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold px-4 py-2.5 border border-white/5 transition-all cursor-pointer text-slate-300"
+                      className="rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold px-4 py-2.5 border border-gray-200 transition-all cursor-pointer text-slate-700"
                     >
                       Clear Response
                     </button>
@@ -2347,7 +3529,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     <button
                       onClick={() => setMockIndex(prev => Math.max(0, prev - 1))}
                       disabled={mockIndex === 0}
-                      className="rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold px-4 py-2.5 border border-white/5 transition-all text-slate-300 cursor-pointer flex items-center gap-1"
+                      className="rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold px-4 py-2.5 border border-gray-200 transition-all text-slate-700 cursor-pointer flex items-center gap-1"
                     >
                       <ChevronLeftIcon size={14} />
                       <span>Prev</span>
@@ -2355,7 +3537,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                     <button
                       onClick={saveAndNextMock}
-                      className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 shadow-lg shadow-indigo-600/10 transition-all cursor-pointer flex items-center gap-1"
+                      className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2.5 shadow-lg shadow-indigo-600/15 transition-all cursor-pointer flex items-center gap-1"
                     >
                       <span>Save & Next</span>
                       <ChevronRightIcon size={14} />
@@ -2366,12 +3548,12 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               </div>
 
               {/* Right Sidebar: Testbook Sticky Navigator Matrix */}
-              <aside className={`glass rounded-3xl p-5 space-y-6 lg:block border border-white/5 ${
+              <aside className={`glass rounded-3xl p-5 space-y-6 lg:block ${
                 mobileMenuOpen ? "block absolute inset-x-0 top-0 z-30 shadow-2xl glass-premium animate-fade-in" : "hidden"
               }`}>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Questions Panel</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Click any number to jump directly</p>
+                  <h3 className="text-sm font-bold text-slate-800">Questions Panel</h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Click any number to jump directly</p>
                 </div>
 
                 {/* Grid Numbers styled according to visited state */}
@@ -2391,13 +3573,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     } else if (isAnswered) {
                       indicatorClass = "cbt-answered text-white";
                     } else if (isVisited) {
-                      indicatorClass = "cbt-unanswered text-rose-400";
+                      indicatorClass = "cbt-unanswered text-rose-450";
                     } else {
-                      indicatorClass = "cbt-unvisited text-slate-400";
+                      indicatorClass = "cbt-unvisited text-slate-500";
                     }
 
                     const borderStyle = isCurrent
-                      ? "ring-2 ring-indigo-400 ring-offset-2 ring-offset-slate-950 scale-110 z-10 shadow-lg shadow-indigo-500/35 border-transparent font-extrabold"
+                      ? "ring-2 ring-indigo-600 ring-offset-2 ring-offset-white scale-110 z-10 shadow-lg shadow-indigo-600/35 border-transparent font-extrabold"
                       : "border-transparent";
 
                     return (
@@ -2416,13 +3598,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 </div>
 
                 {/* Legend explanation matrix */}
-                <div className="pt-5 border-t border-white/5 space-y-3 text-[10px] font-bold text-slate-400">
+                <div className="pt-5 border-t border-gray-200 space-y-3 text-[10px] font-bold text-slate-500">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="h-6 w-6 flex items-center justify-center cbt-answered text-[10px] font-bold">1</span>
                       <span>Answered (उत्तर दिया)</span>
                     </div>
-                    <span className="font-bold text-white">
+                    <span className="font-bold text-slate-800">
                       {mockQuestions.filter((_, idx) => mockAnswers[idx] !== null && !mockMarked[idx]).length}
                     </span>
                   </div>
@@ -2432,7 +3614,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <span className="h-6 w-6 flex items-center justify-center cbt-answered-review text-[10px] font-bold">1</span>
                       <span>Answered & Marked (उत्तर व समीक्षा)</span>
                     </div>
-                    <span className="font-bold text-white">
+                    <span className="font-bold text-slate-800">
                       {mockQuestions.filter((_, idx) => mockAnswers[idx] !== null && mockMarked[idx]).length}
                     </span>
                   </div>
@@ -2442,7 +3624,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <span className="h-6 w-6 flex items-center justify-center cbt-review text-[10px] font-bold">1</span>
                       <span>Marked for Review (समीक्षा)</span>
                     </div>
-                    <span className="font-bold text-white">
+                    <span className="font-bold text-slate-800">
                       {mockQuestions.filter((_, idx) => mockAnswers[idx] === null && mockMarked[idx]).length}
                     </span>
                   </div>
@@ -2452,7 +3634,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <span className="h-6 w-6 flex items-center justify-center cbt-unanswered text-[10px] font-bold">1</span>
                       <span>Not Answered (बचे हुए)</span>
                     </div>
-                    <span className="font-bold text-white">
+                    <span className="font-bold text-slate-800">
                       {mockQuestions.filter((_, idx) => mockAnswers[idx] === null && !mockMarked[idx] && mockVisited[idx]).length}
                     </span>
                   </div>
@@ -2462,7 +3644,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       <span className="h-6 w-6 flex items-center justify-center cbt-unvisited text-[10px] font-bold">1</span>
                       <span>Not Visited (अभी तक नहीं देखा)</span>
                     </div>
-                    <span className="font-bold text-white">{mockAnswers.filter((_, idx) => !mockVisited[idx]).length}</span>
+                    <span className="font-bold text-slate-800">{mockAnswers.filter((_, idx) => !mockVisited[idx]).length}</span>
                   </div>
                 </div>
               </aside>
@@ -2479,21 +3661,21 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
             
             {/* Scorecard Header */}
-            <div className="glass-premium rounded-3xl p-8 border border-white/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+            <div className="glass-premium rounded-3xl p-8 border border-gray-200 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
               <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-2xl"></div>
               
               <div className="space-y-3 text-center md:text-left">
-                <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 text-xs font-semibold text-indigo-300 uppercase">
+                <span className="rounded-full bg-indigo-50 px-3.5 py-1 text-xs font-semibold text-indigo-700 uppercase border border-indigo-100">
                   Exam Completed Successfully
                 </span>
                 
-                <h2 className="text-3xl font-extrabold text-white">
+                <h2 className="text-3xl font-extrabold text-slate-800">
                   Official CBT Result Card
                 </h2>
                 
-                <p className="text-xs text-slate-400">
-                  Subject Tested: <span className="font-semibold text-slate-300">{lastAttempt.category}</span> • 
-                  Exam Date: <span className="font-semibold text-slate-300">{formatDate(new Date().toISOString())}</span>
+                <p className="text-xs text-slate-500">
+                  Subject Tested: <span className="font-semibold text-slate-700">{lastAttempt.category}</span> • 
+                  Exam Date: <span className="font-semibold text-slate-700">{formatDate(new Date().toISOString())}</span>
                 </p>
               </div>
 
@@ -2507,12 +3689,12 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 const finalMark = Math.max(0, totalCorrect - (totalPenalized * 0.33));
 
                 return (
-                  <div className="flex flex-col items-center justify-center p-6 bg-slate-900/60 rounded-3xl border border-white/5 w-40 h-40">
-                    <span className={`text-4xl font-extrabold ${lastAttempt.score >= 50 ? "text-emerald-400" : "text-rose-400"}`}>
+                  <div className="flex flex-col items-center justify-center p-6 bg-indigo-50 rounded-3xl border border-indigo-100 w-40 h-40">
+                    <span className={`text-4xl font-extrabold ${lastAttempt.score >= 50 ? "text-emerald-600" : "text-rose-600"}`}>
                       {lastAttempt.score}%
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1.5">Marks Scored</span>
-                    <span className="text-xs text-indigo-300 font-bold mt-0.5">
+                    <span className="text-[10px] text-indigo-655 font-semibold uppercase tracking-wider mt-1.5">Marks Scored</span>
+                    <span className="text-xs text-indigo-805 font-bold mt-0.5">
                       {finalMark.toFixed(2)} / {lastAttempt.total}.00 Marks
                     </span>
                   </div>
@@ -2529,37 +3711,37 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
               return (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="glass rounded-2xl p-4 border border-emerald-500/10 bg-emerald-500/5 relative overflow-hidden group hover:border-emerald-500/35 transition-all">
+                  <div className="glass rounded-2xl p-4 border border-emerald-250 bg-emerald-50/50 relative overflow-hidden group hover:border-emerald-400 transition-all">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/5 rounded-full blur-lg pointer-events-none"></div>
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold">🟢 Correct (सही विकल्प)</p>
-                    <h4 className="text-xl font-extrabold text-emerald-400 pt-1">
+                    <p className="text-[10px] text-slate-600 uppercase font-semibold">🟢 Correct (सही विकल्प)</p>
+                    <h4 className="text-xl font-extrabold text-emerald-650 pt-1">
                       {totalCorrect} Qs
                     </h4>
                     <p className="text-[9px] text-slate-500 font-medium mt-1">Score weight: +1.00 each</p>
                   </div>
 
-                  <div className="glass rounded-2xl p-4 border border-rose-500/10 bg-rose-500/5 relative overflow-hidden group hover:border-rose-500/35 transition-all">
+                  <div className="glass rounded-2xl p-4 border border-rose-250 bg-rose-50/50 relative overflow-hidden group hover:border-rose-400 transition-all">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/5 rounded-full blur-lg pointer-events-none"></div>
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold">🔴 Incorrect (गलत विकल्प)</p>
-                    <h4 className="text-xl font-extrabold text-rose-400 pt-1">
+                    <p className="text-[10px] text-slate-600 uppercase font-semibold">🔴 Incorrect (गलत विकल्प)</p>
+                    <h4 className="text-xl font-extrabold text-rose-655 pt-1">
                       {totalIncorrect} Qs
                     </h4>
                     <p className="text-[9px] text-slate-500 font-medium mt-1">Penalty: -0.33 each</p>
                   </div>
 
-                  <div className="glass rounded-2xl p-4 border border-purple-500/10 bg-purple-500/5 relative overflow-hidden group hover:border-purple-500/35 transition-all">
+                  <div className="glass rounded-2xl p-4 border border-purple-250 bg-purple-50/50 relative overflow-hidden group hover:border-purple-400 transition-all">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 rounded-full blur-lg pointer-events-none"></div>
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold">🟣 Option E (अनुत्तरित)</p>
-                    <h4 className="text-xl font-extrabold text-purple-400 pt-1">
+                    <p className="text-[10px] text-slate-600 uppercase font-semibold">🟣 Option E (अनुत्तरित)</p>
+                    <h4 className="text-xl font-extrabold text-purple-650 pt-1">
                       {totalOptionE} Qs
                     </h4>
                     <p className="text-[9px] text-slate-500 font-medium mt-1">Safe Skip: 0.00 marks</p>
                   </div>
 
-                  <div className="glass rounded-2xl p-4 border border-amber-500/10 bg-amber-500/5 relative overflow-hidden group hover:border-amber-500/35 transition-all">
+                  <div className="glass rounded-2xl p-4 border border-amber-250 bg-amber-50/50 relative overflow-hidden group hover:border-amber-400 transition-all">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-lg pointer-events-none"></div>
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold">⚠️ Blank Bubble (खाली OMR)</p>
-                    <h4 className="text-xl font-extrabold text-amber-500 pt-1">
+                    <p className="text-[10px] text-slate-600 uppercase font-semibold">⚠️ Blank Bubble (खाली OMR)</p>
+                    <h4 className="text-xl font-extrabold text-amber-600 pt-1">
                       {totalBlank} Qs
                     </h4>
                     <p className="text-[9px] text-slate-500 font-medium mt-1">OMR Penalty: -0.33 each!</p>
@@ -2572,24 +3754,24 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               <div className="glass rounded-2xl p-5 space-y-1">
-                <p className="text-xs text-slate-400 uppercase font-semibold">CBT Assessment Status</p>
-                <h4 className={`text-base font-bold pt-1 ${lastAttempt.score >= 50 ? "text-emerald-400" : "text-rose-400"}`}>
+                <p className="text-xs text-slate-500 uppercase font-semibold">CBT Assessment Status</p>
+                <h4 className={`text-base font-bold pt-1 ${lastAttempt.score >= 50 ? "text-emerald-600" : "text-rose-600"}`}>
                   {lastAttempt.score >= 50 ? "✅ QUALIFIED (सफल)" : "❌ REQUIRES REVISION (पुनः प्रयास)"}
                 </h4>
                 <p className="text-xs text-slate-500 pt-1">Cutoff rating evaluated at 50% standard.</p>
               </div>
 
               <div className="glass rounded-2xl p-5 space-y-1">
-                <p className="text-xs text-slate-400 uppercase font-semibold">CBT Pace Velocity</p>
-                <h4 className="text-base font-bold text-white pt-1">
+                <p className="text-xs text-slate-500 uppercase font-semibold">CBT Pace Velocity</p>
+                <h4 className="text-base font-bold text-slate-800 pt-1">
                   {lastAttempt.timeSpent > 0 ? `${Math.round(lastAttempt.timeSpent / lastAttempt.total)} s / Question` : "Practice Mode"}
                 </h4>
                 <p className="text-xs text-slate-500 pt-1">Recommended target: &lt; 90 seconds.</p>
               </div>
 
               <div className="glass rounded-2xl p-5 space-y-1">
-                <p className="text-xs text-slate-400 uppercase font-semibold">Total Time Taken</p>
-                <h4 className="text-base font-bold text-indigo-300 pt-1">
+                <p className="text-xs text-slate-500 uppercase font-semibold">Total Time Taken</p>
+                <h4 className="text-base font-bold text-indigo-700 pt-1">
                   {lastAttempt.timeSpent > 0 ? `${formatTimer(lastAttempt.timeSpent)} minutes` : "Practice Session"}
                 </h4>
                 <p className="text-xs text-slate-500 pt-1">Strict Rajasthan Board 5-bubble guidelines active.</p>
@@ -2598,10 +3780,10 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             </div>
 
             {/* Dynamic Category Accuracy Stacked Progress Bar Grid */}
-            <div className="glass rounded-3xl p-6 border border-white/5 space-y-4">
+            <div className="glass rounded-3xl p-6 space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Category-wise Analytics (विषयवार विश्लेषण)</h3>
-                <p className="text-[10px] text-slate-400 mt-0.5">Proportion of correct, incorrect, and skipped questions per category</p>
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Category-wise Analytics (विषयवार विश्लेषण)</h3>
+                <p className="text-[10px] text-slate-500 mt-0.5">Proportion of correct, incorrect, and skipped questions per category</p>
               </div>
 
               <div className="space-y-4">
@@ -2638,15 +3820,15 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                   return (
                     <div key={cat} className="space-y-2 text-xs">
-                      <div className="flex items-center justify-between font-semibold text-slate-300">
+                      <div className="flex items-center justify-between font-semibold text-slate-700">
                         <span>{cat}</span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-500">
                           {right} Correct • {wrong} Incorrect • {optionE} Option E • {blank} Blank
                         </span>
                       </div>
 
                       {/* 4-State OMR Stacked Progress Bar */}
-                      <div className="w-full bg-slate-900 rounded-full h-3.5 overflow-hidden flex border border-white/5">
+                      <div className="w-full bg-gray-100 rounded-full h-3.5 overflow-hidden flex border border-gray-200">
                         {right > 0 && (
                           <div 
                             className="bg-emerald-500 h-full flex items-center justify-center text-[8px] text-slate-950 font-bold"
@@ -2693,7 +3875,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             {/* Solutions reviewing list */}
             <div className="space-y-4">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                <span className="h-2 w-2 bg-indigo-400 rounded-full animate-ping"></span>
+                <span className="h-2 w-2 bg-indigo-500 rounded-full animate-ping"></span>
                 Official Solution Review Grid (प्रश्नों की समीक्षा)
               </h3>
 
@@ -2705,44 +3887,44 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   return (
                     <div 
                       key={question.id}
-                      className="glass rounded-3xl p-6 space-y-4 border border-white/5 relative"
+                      className="glass rounded-3xl p-6 space-y-4 relative"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-indigo-400 font-bold">
+                        <span className="text-xs text-indigo-600 font-bold">
                           Question {idx + 1}
                         </span>
                         
                         {(() => {
                           if (isCorrect) {
                             return (
-                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-250 uppercase tracking-wider">
                                 Correct (+1.00)
                               </span>
                             );
                           }
                           if (selectedIdx === 4) {
                             return (
-                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-wider">
+                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-250 uppercase tracking-wider">
                                 Not Attempted (0.00)
                               </span>
                             );
                           }
                           if (selectedIdx === null) {
                             return (
-                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+                              <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-250 uppercase tracking-wider">
                                 Blank OMR Penalty (-0.33)
                               </span>
                             );
                           }
                           return (
-                            <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-wider">
+                            <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-700 border border-rose-250 uppercase tracking-wider">
                               Incorrect (-0.33)
                             </span>
                           );
                         })()}
                       </div>
 
-                      <h4 className="text-base font-bold text-white leading-relaxed">
+                      <h4 className="text-base font-bold text-slate-800 leading-relaxed">
                         {question.question}
                       </h4>
 
@@ -2752,11 +3934,11 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                           const isCorrectChoice = optIdx === question.answerIndex;
                           const isUserSelection = optIdx === selectedIdx;
                           
-                          let badgeStyle = "bg-white/5 border border-white/5 text-slate-400";
+                          let badgeStyle = "bg-gray-50 border border-gray-200 text-gray-600";
                           if (isCorrectChoice) {
-                            badgeStyle = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-semibold";
+                            badgeStyle = "bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold";
                           } else if (isUserSelection) {
-                            badgeStyle = "bg-rose-500/10 border border-rose-500/30 text-rose-300";
+                            badgeStyle = "bg-rose-50 border border-rose-200 text-rose-750";
                           }
 
                           return (
@@ -2774,8 +3956,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                       {/* Explanations reveals only here */}
                       {question.explanation && (
-                        <div className="bg-indigo-500/5 rounded-2xl p-4 text-xs text-slate-300 leading-relaxed border border-indigo-500/10">
-                          <p className="font-bold text-indigo-300 flex items-center gap-1 mb-1.5 uppercase tracking-wider">
+                        <div className="bg-indigo-50/50 rounded-2xl p-4 text-xs text-slate-700 leading-relaxed border border-indigo-100">
+                          <p className="font-bold text-indigo-700 flex items-center gap-1 mb-1.5 uppercase tracking-wider">
                             <InfoIcon size={12} />
                             Explanation (व्याख्या)
                           </p>
@@ -2810,27 +3992,27 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
       {/* 1. HTML5 Canvas Scratchpad (कच्चा काम/रफ़ बोर्ड) */}
       {showScratchpad && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[450px] bg-slate-950 border-l border-white/10 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[450px] bg-white border-l border-gray-200 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left">
           <div>
-            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-indigo-400">📝</span>
-                <h3 className="text-sm font-bold text-white">Virtual Scratchpad (रफ़ काम)</h3>
+                <span className="text-indigo-600">📝</span>
+                <h3 className="text-sm font-bold text-slate-800">Virtual Scratchpad (रफ़ काम)</h3>
               </div>
               <button 
                 onClick={() => setShowScratchpad(false)}
-                className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors text-slate-500 hover:text-slate-800 cursor-pointer"
               >
                 <XIcon size={16} />
               </button>
             </div>
 
-            <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
+            <p className="text-[10px] text-slate-600 mb-3 leading-relaxed">
               पॉइंटर/टच का उपयोग करके यहाँ चित्र बनाएं या गणितीय गणना का रफ़ काम करें।
             </p>
 
             {/* Canvas Drawing Area */}
-            <div className="relative border border-white/10 rounded-2xl overflow-hidden bg-slate-900">
+            <div className="relative border border-gray-200 rounded-2xl overflow-hidden bg-gray-50">
               <canvas
                 ref={canvasRef}
                 width={400}
@@ -2839,7 +4021,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 onPointerMove={draw}
                 onPointerUp={stopDrawing}
                 onPointerLeave={stopDrawing}
-                className="w-full h-[380px] bg-slate-900 cursor-crosshair touch-none"
+                className="w-full h-[380px] bg-white cursor-crosshair touch-none"
               />
             </div>
 
@@ -2850,7 +4032,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   <button
                     key={col}
                     onClick={() => setDrawColor(col)}
-                    className="h-6 w-6 rounded-full border border-white/20 cursor-pointer flex items-center justify-center"
+                    className="h-6 w-6 rounded-full border border-gray-250 cursor-pointer flex items-center justify-center"
                     style={{ backgroundColor: col }}
                   >
                     {drawColor === col && <CheckIcon size={12} className="text-white" />}
@@ -2862,7 +4044,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 <select
                   value={drawWidth}
                   onChange={(e) => setDrawWidth(parseInt(e.target.value))}
-                  className="rounded bg-slate-900 border border-white/10 text-xs p-1 text-slate-300"
+                  className="rounded bg-white border border-gray-200 text-xs p-1 text-slate-700"
                 >
                   <option value={2}>Thin brush</option>
                   <option value={4}>Medium brush</option>
@@ -2871,7 +4053,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
                 <button
                   onClick={clearCanvas}
-                  className="rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs px-3 py-1 font-semibold cursor-pointer"
+                  className="rounded bg-rose-50 border border-rose-200 text-rose-600 text-xs px-3 py-1 font-semibold cursor-pointer"
                 >
                   Clear Board
                 </button>
@@ -2879,7 +4061,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             </div>
           </div>
 
-          <div className="text-[9px] text-slate-500 text-center border-t border-white/5 pt-4">
+          <div className="text-[9px] text-slate-500 text-center border-t border-gray-100 pt-4">
             Interactive blackboard vector drawing tool active.
           </div>
         </div>
@@ -2887,29 +4069,29 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
       {/* 2. Core CS Cheat Sheet (शॉर्ट नोट्स) */}
       {showCheatSheet && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-slate-950 border-l border-white/10 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-white border-l border-gray-200 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left">
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-amber-400">⚡</span>
-                <h3 className="text-sm font-bold text-white">CS Quick Revision Sheets</h3>
+                <span className="text-amber-500">⚡</span>
+                <h3 className="text-sm font-bold text-slate-800">CS Quick Revision Sheets</h3>
               </div>
               <button 
                 onClick={() => setShowCheatSheet(false)}
-                className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors text-slate-500 hover:text-slate-800 cursor-pointer"
               >
                 <XIcon size={16} />
               </button>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex gap-1 border-b border-white/5 mb-4 text-[10px] font-bold text-slate-400">
+            <div className="flex gap-1 border-b border-gray-200 mb-4 text-[10px] font-bold text-slate-500">
               {["DBMS", "DSA", "Programming", "OS"].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setCheatTab(tab as any)}
                   className={`flex-1 py-1.5 text-center transition-all cursor-pointer ${
-                    cheatTab === tab ? "text-amber-400 border-b-2 border-amber-500" : "hover:text-slate-200"
+                    cheatTab === tab ? "text-amber-605 border-b-2 border-amber-500" : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
                   {tab}
@@ -2922,16 +4104,16 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               
               {cheatTab === "DBMS" && (
                 <div className="space-y-4 text-xs animate-fade-in">
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-1.5">
-                    <h4 className="font-bold text-amber-300">Normalization Forms (नॉर्मलाइजेशन)</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 space-y-1.5 text-slate-700">
+                    <h4 className="font-bold text-amber-700">Normalization Forms (नॉर्मलाइजेशन)</h4>
                     <p><strong>1NF:</strong> Attributes must be atomic (no arrays/multivalued values).</p>
                     <p><strong>2NF:</strong> 1NF + No partial dependencies (No non-prime attribute dependent on a part of candidate key).</p>
                     <p><strong>3NF:</strong> 2NF + No transitive dependencies (No non-prime dependent on non-prime).</p>
                     <p><strong>BCNF:</strong> For X ➔ Y, X must be a Super Key.</p>
                     <p><strong>4NF:</strong> Eliminates non-trivial Multi-valued dependencies.</p>
                   </div>
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-1.5">
-                    <h4 className="font-bold text-amber-300">ACID Properties</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 space-y-1.5 text-slate-700">
+                    <h4 className="font-bold text-amber-700">ACID Properties</h4>
                     <p><strong>Atomicity:</strong> All or nothing transaction execution.</p>
                     <p><strong>Consistency:</strong> Database constraints remain preserved.</p>
                     <p><strong>Isolation:</strong> Transactions run independently without race states.</p>
@@ -2942,21 +4124,21 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
               {cheatTab === "DSA" && (
                 <div className="space-y-4 text-xs animate-fade-in">
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
-                    <h4 className="font-bold text-amber-300 mb-2">Algorithmic Complexities (जटिलता)</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 text-slate-750">
+                    <h4 className="font-bold text-amber-700 mb-2">Algorithmic Complexities (जटिलता)</h4>
                     <table className="w-full text-left text-[10px]">
                       <thead>
-                        <tr className="border-b border-white/10 text-slate-400">
+                        <tr className="border-b border-gray-250 text-slate-650">
                           <th className="pb-1.5">Algorithm</th>
                           <th className="pb-1.5">Average</th>
                           <th className="pb-1.5">Worst</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5 text-slate-300">
+                      <tbody className="divide-y divide-gray-100 text-slate-700">
                         <tr>
                           <td className="py-1.5">Quick Sort</td>
                           <td>O(n log n)</td>
-                          <td className="text-rose-400">O(n²)</td>
+                          <td className="text-rose-600 font-semibold">O(n²)</td>
                         </tr>
                         <tr>
                           <td className="py-1.5">Merge Sort</td>
@@ -2976,8 +4158,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       </tbody>
                     </table>
                   </div>
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-1">
-                    <h4 className="font-bold text-amber-300">Traversal Models</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 space-y-1 text-slate-700">
+                    <h4 className="font-bold text-amber-700">Traversal Models</h4>
                     <p><strong>In-order (L-Root-R):</strong> BST traversal yields sorted ascending numbers.</p>
                     <p><strong>Pre-order (Root-L-R):</strong> Copies BST structure.</p>
                     <p><strong>BFS:</strong> Queue matrix logic (level-by-level search).</p>
@@ -2988,14 +4170,14 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
               {cheatTab === "Programming" && (
                 <div className="space-y-4 text-xs animate-fade-in">
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-1.5">
-                    <h4 className="font-bold text-amber-300">C++ OOP Rules</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 space-y-1.5 text-slate-700">
+                    <h4 className="font-bold text-amber-700">C++ OOP Rules</h4>
                     <p><strong>final Class:</strong> Prevent inheritance (`class Derived final : base {}`).</p>
                     <p><strong>virtual override:</strong> Prevent overriding with `final` virtual function.</p>
                     <p><strong>friend function:</strong> External function allowed to query private attributes.</p>
                   </div>
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-1.5">
-                    <h4 className="font-bold text-amber-300">Web CSS parameters</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 space-y-1.5 text-slate-700">
+                    <h4 className="font-bold text-amber-700">Web CSS parameters</h4>
                     <p><strong>display: flex:</strong> Convert container element to dynamic Flex layout.</p>
                     <p><strong>flex-direction:</strong> row, row-reverse, column, column-reverse.</p>
                   </div>
@@ -3004,13 +4186,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
               {cheatTab === "OS" && (
                 <div className="space-y-4 text-xs animate-fade-in">
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-1.5">
-                    <h4 className="font-bold text-amber-300">Page Replacement</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 space-y-1.5 text-slate-700">
+                    <h4 className="font-bold text-amber-700">Page Replacement</h4>
                     <p><strong>Belady's Anomaly:</strong> Increasing frames leads to MORE page faults. Exclusively affects FIFO algorithm.</p>
                     <p><strong>LRU:</strong> Replaces page least recently requested by processes.</p>
                   </div>
-                  <div className="bg-slate-900 border border-white/5 rounded-xl p-4 space-y-1.5">
-                    <h4 className="font-bold text-amber-300">Process Scheduling</h4>
+                  <div className="bg-amber-50/40 border border-amber-100/75 rounded-xl p-4 space-y-1.5 text-slate-700">
+                    <h4 className="font-bold text-amber-700">Process Scheduling</h4>
                     <p><strong>Starvation:</strong> Shortest Job First (SJF) and Priority (without aging) causes low priority processes to wait indefinitely.</p>
                     <p><strong>Round Robin:</strong> FCFS with time slice (quantum). No starvation.</p>
                   </div>
@@ -3020,7 +4202,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             </div>
           </div>
 
-          <div className="text-[9px] text-slate-500 text-center border-t border-white/5 pt-4">
+          <div className="text-[9px] text-slate-500 text-center border-t border-gray-100 pt-4">
             Bilingual CS formula note sheets loaded.
           </div>
         </div>
@@ -3028,25 +4210,25 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
       {/* 3. Draggable Programmer Calculator Popup (गणना यंत्र) */}
       {showCalculator && (
-        <div className="fixed bottom-6 right-6 z-50 w-72 bg-slate-950 border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 animate-slide-up">
-          <div className="flex items-center justify-between border-b border-white/5 pb-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-400">
+        <div className="fixed bottom-6 right-6 z-50 w-72 bg-white border border-gray-200 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 animate-slide-up text-slate-800">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700">
               <span>🧮</span>
               <span>Scientific & Base Calculator</span>
             </div>
             <button 
               onClick={() => setShowCalculator(false)}
-              className="p-0.5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
+              className="p-0.5 hover:bg-gray-100 rounded-full transition-colors text-slate-500 hover:text-slate-800 cursor-pointer"
             >
               <XIcon size={14} />
             </button>
           </div>
 
           {/* Calculator Screen */}
-          <div className="rounded-xl bg-black/40 border border-white/5 p-3 text-right">
+          <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-right">
             <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">Base Mode: {calcBase}</span>
-            <div className="text-xs text-slate-400 font-mono h-4 overflow-hidden truncate">{calcInput || "0"}</div>
-            <div className="text-lg font-bold font-mono text-indigo-300 truncate mt-1">{calcResult || "0"}</div>
+            <div className="text-xs text-slate-550 font-mono h-4 overflow-hidden truncate">{calcInput || "0"}</div>
+            <div className="text-lg font-bold font-mono text-indigo-700 truncate mt-1">{calcResult || "0"}</div>
           </div>
 
           {/* Keypads */}
@@ -3057,8 +4239,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 onClick={() => handleCalcBtn(btn)}
                 className={`py-2 rounded-lg cursor-pointer transition-colors ${
                   btn === "=" ? "bg-indigo-600 hover:bg-indigo-500 text-white col-span-2" :
-                  ["DEC", "BIN", "HEX", "C"].includes(btn) ? "bg-slate-800 hover:bg-slate-700 text-indigo-400" :
-                  "bg-slate-900 hover:bg-slate-800 text-slate-300"
+                  ["DEC", "BIN", "HEX", "C"].includes(btn) ? "bg-indigo-50 hover:bg-indigo-100 text-indigo-700" :
+                  "bg-gray-100 hover:bg-gray-200 text-gray-700"
                 }`}
               >
                 {btn === "=" && calcResult ? "Solve" : btn}
@@ -3069,13 +4251,13 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       )}
 
       {/* Footer */}
-      <footer className="glass border-t border-white/5 py-6 px-6 md:px-12 mt-12 text-center text-xs text-slate-500">
+      <footer className="bg-white border-t border-gray-200 py-6 px-6 md:px-12 mt-12 text-center text-xs text-gray-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Computer Instructor CBT preparation portal. Designed like Testbook CBT series.</p>
-          <div className="flex items-center gap-3 text-slate-400">
-            <span>Dynamic CBT Mode</span>
+          <p>© 2026 SSC CBT Exam Preparation Portal • Computer Instructor Exam</p>
+          <div className="flex items-center gap-3 text-gray-400">
+            <span>🔥 Firebase Powered</span>
             <span>•</span>
-            <span>Smartphone Responsive Spec</span>
+            <span>Responsive Design</span>
           </div>
         </div>
       </footer>

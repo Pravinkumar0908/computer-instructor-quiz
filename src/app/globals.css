@@ -1,10 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712;
-  --foreground: #f9fafb;
-  --card-bg: rgba(17, 24, 39, 0.7);
-  --card-border: rgba(255, 255, 255, 0.08);
+  --background: #f0f2f5;
+  --foreground: #1a1a2e;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --primary: #1a56db;
+  --primary-light: #e8edff;
+  --primary-hover: #1648b8;
+  --accent: #059669;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --border-focus: #1a56db;
+  --nav-bg: #1e3a5f;
+  --nav-text: #ffffff;
+  --ssc-green: #22c55e;
+  --ssc-red: #ef4444;
+  --ssc-purple: #7c3aed;
+  --ssc-blue: #2563eb;
+  --ssc-orange: #f59e0b;
 }
 
 @theme inline {
@@ -14,57 +32,56 @@
   --font-mono: var(--font-geist-mono);
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
 }
 
-/* Custom Scrollbar for Sleek Appearance */
+/* Custom Scrollbar — Light Theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #030712;
+  background: #f1f1f1;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f2937;
+  background: #c1c1c1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #999;
 }
 
-/* Slide-out Drawer Panel Animation Tokens */
-.drawer-transition {
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-}
-
-/* Official SSC CGL / Testbook CBT Colors */
+/* SSC CBT Official Status Colors */
 .cbt-answered {
-  background-color: #22c55e !important; /* Green */
+  background-color: #22c55e !important;
   color: #ffffff !important;
   border-color: #22c55e !important;
-  border-radius: 4px 4px 16px 4px !important; /* Testbook classic question status cut */
+  border-radius: 4px 4px 16px 4px !important;
 }
 
 .cbt-review {
-  background-color: #8b5cf6 !important; /* Purple */
+  background-color: #7c3aed !important;
   color: #ffffff !important;
-  border-color: #8b5cf6 !important;
-  border-radius: 50% !important; /* Circular for reviews */
+  border-color: #7c3aed !important;
+  border-radius: 50% !important;
 }
 
 .cbt-answered-review {
-  background-color: #8b5cf6 !important; /* Purple background */
+  background-color: #7c3aed !important;
   color: #ffffff !important;
-  border-color: #8b5cf6 !important;
-  border-radius: 50% !important; /* Circular for reviews */
+  border-color: #7c3aed !important;
+  border-radius: 50% !important;
   position: relative;
 }
 
@@ -75,26 +92,26 @@ body {
   right: 0px;
   width: 8px;
   height: 8px;
-  background-color: #22c55e !important; /* Green dot */
+  background-color: #22c55e !important;
   border: 1px solid #ffffff;
   border-radius: 50%;
 }
 
 .cbt-unanswered {
-  background-color: rgba(239, 68, 68, 0.1) !important; /* Translucent Red */
-  color: #f87171 !important;
-  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  background-color: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1.5px solid #fca5a5 !important;
   border-radius: 16px 4px 4px 4px !important;
 }
 
 .cbt-unvisited {
-  background-color: rgba(255, 255, 255, 0.02) !important;
-  color: #94a3b8 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  border: 1.5px solid #e5e7eb !important;
   border-radius: 4px !important;
 }
 
-/* Helper Utilities */
+/* Utility Animations */
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
@@ -106,6 +123,16 @@ body {
   50% { opacity: 0.6; }
 }
 
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -114,39 +141,217 @@ body {
   animation: pulse-glow 8s ease-in-out infinite;
 }
 
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* Light Theme Glass Cards */
 .glass {
-  background: rgba(17, 24, 39, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .glass-premium {
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.75) 0%, rgba(31, 41, 55, 0.6) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.08), 0 2px 6px -2px rgba(0, 0, 0, 0.04);
 }
 
 .glass-input {
-  background: rgba(3, 7, 18, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #f9fafb;
+  border: 1.5px solid #d1d5db;
+  color: #111827;
+  transition: all 0.2s ease;
 }
 
 .glass-input:focus {
-  background: rgba(3, 7, 18, 0.6);
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+  background: #ffffff;
+  border-color: #1a56db;
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+  outline: none;
 }
 
-/* Glowing Radial Circles in Backdrop */
+/* SSC Exam Top Bar Gradient */
+.ssc-nav {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f2849 100%);
+  border-bottom: 3px solid #f59e0b;
+}
+
+/* SSC Exam Header Strip */
+.ssc-header-strip {
+  background: linear-gradient(90deg, #1a56db 0%, #2563eb 100%);
+  padding: 8px 16px;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* Question Option — Light SSC Style */
+.ssc-option {
+  background: #ffffff;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #374151;
+  font-size: 14px;
+}
+
+.ssc-option:hover {
+  border-color: #1a56db;
+  background: #eff6ff;
+}
+
+.ssc-option.selected {
+  border-color: #1a56db;
+  background: #dbeafe;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.ssc-option.correct {
+  border-color: #22c55e;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.ssc-option.incorrect {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* SSC Action Buttons */
+.ssc-btn-primary {
+  background: linear-gradient(135deg, #1a56db 0%, #2563eb 100%);
+  color: white;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(26, 86, 219, 0.2);
+}
+
+.ssc-btn-primary:hover {
+  background: linear-gradient(135deg, #1648b8 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+  transform: translateY(-1px);
+}
+
+.ssc-btn-secondary {
+  background: #ffffff;
+  color: #374151;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: 1.5px solid #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.ssc-btn-secondary:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.ssc-btn-danger {
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: 1.5px solid #fca5a5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.ssc-btn-danger:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+/* SSC Timer Badge */
+.ssc-timer {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  color: white;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: var(--font-geist-mono), monospace;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.ssc-timer.safe {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+
+/* SSC Question Palette Grid */
+.ssc-palette-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.ssc-palette-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ssc-palette-btn.current {
+  border: 2px solid #1a56db;
+  box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.2);
+}
+
+/* Stat card light hover */
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: #1a56db;
+  box-shadow: 0 4px 16px rgba(26, 86, 219, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Drawer transition */
+.drawer-transition {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+/* Background decorative elements — Light subtle */
 .glow-spot-indigo {
   position: absolute;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(circle, rgba(26, 86, 219, 0.04) 0%, rgba(26, 86, 219, 0) 70%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
@@ -156,7 +361,7 @@ body {
   position: absolute;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0) 70%);
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.03) 0%, rgba(5, 150, 105, 0) 70%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
@@ -166,16 +371,42 @@ body {
   position: absolute;
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(244, 63, 94, 0.08) 0%, rgba(244, 63, 94, 0) 70%);
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.03) 0%, rgba(220, 38, 38, 0) 70%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Touch Friendly active scale */
+/* Touch-friendly active */
 .touch-scale {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .touch-scale:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
+}
+
+/* SSC Exam Section Divider */
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+  margin: 24px 0;
+}
+
+/* Badge styles */
+.badge-easy {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-medium {
+  background: #fef9c3;
+  color: #a16207;
+  border: 1px solid #fde68a;
+}
+
+.badge-hard {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
 }
