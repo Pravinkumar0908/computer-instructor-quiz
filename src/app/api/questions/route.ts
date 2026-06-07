@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { getQuestions, addQuestion, addQuestionsBulk, deleteQuestion, deleteQuestionsByQuizName, deleteQuestionsByBatchId, updateQuizNameByBatchId, updateQuizNameByLegacyName, Question } from "@/lib/db";
 

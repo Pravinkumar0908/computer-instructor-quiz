@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { getDashboardStats, addAttempt, Attempt } from "@/lib/db";
 
