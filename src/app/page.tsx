@@ -456,10 +456,15 @@ export default function ExamPrepPortal() {
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>("");
 
-  const [activeSyllabusTab, setActiveSyllabusTab] = useState<"overview" | "paper1" | "paper2">("overview");
+  const [activeSyllabusTab, setActiveSyllabusTab] = useState<"overview" | "cutoff" | "paper1" | "paper2">("overview");
   const [syllabusSearch, setSyllabusSearch] = useState("");
   const [universalSearch, setUniversalSearch] = useState("");
   const [completedTopics, setCompletedTopics] = useState<string[]>([]);
+  
+  // SC Target Score Calculator States
+  const [calcCorrectP1, setCalcCorrectP1] = useState<number>(70);
+  const [calcCorrectP2, setCalcCorrectP2] = useState<number>(70);
+  const [calcWrong, setCalcWrong] = useState<number>(15);
 
   // Load completed syllabus topics from localStorage on mount
   useEffect(() => {
@@ -2690,6 +2695,16 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   📋 Exam Plan & Summary
                 </button>
                 <button
+                  onClick={() => setActiveSyllabusTab("cutoff")}
+                  className={`flex-1 md:flex-initial text-center text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer ${
+                    activeSyllabusTab === "cutoff" 
+                      ? "bg-white text-indigo-750 shadow-sm border border-slate-200/40" 
+                      : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                  }`}
+                >
+                  🎯 Predicted Cutoff 2026
+                </button>
+                <button
                   onClick={() => setActiveSyllabusTab("paper1")}
                   className={`flex-1 md:flex-initial text-center text-xs font-bold px-4 py-2.5 rounded-lg transition-all cursor-pointer ${
                     activeSyllabusTab === "paper1" 
@@ -2711,8 +2726,8 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 </button>
               </div>
 
-              {/* Search Bar - Hidden on Overview tab */}
-              {activeSyllabusTab !== "overview" && (
+              {/* Search Bar - Hidden on Overview & Cutoff tabs */}
+              {activeSyllabusTab !== "overview" && activeSyllabusTab !== "cutoff" && (
                 <div className="relative w-full md:w-80">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs text-gray-400">
                     🔍
@@ -2895,6 +2910,287 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                           );
                         })}
                       </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB CONTENT: 1.5. PREDICTED CUTOFF 2026 */}
+            {activeSyllabusTab === "cutoff" && (
+              <div className="space-y-8 animate-fade-in">
+                
+                {/* Intro Card */}
+                <div className="glass-premium rounded-2xl p-6 border border-slate-100 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-sm">
+                  <div className="h-12 w-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+                    <span className="text-2xl">🎯</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-800">SC Category — Predicted Cutoff 2026</h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      कम्प्यूटर अनुदेशक 2026 की परीक्षा (22 अगस्त 2026) के लिए अनुसूचित जाति (SC) श्रेणी का अपेक्षित कट-ऑफ एवं विश्लेषण। रिक्तियों की संख्या में लगभग 60% की कमी के कारण इस वर्ष कट-ऑफ में वृद्धि की प्रबल संभावना है।
+                    </p>
+                  </div>
+                </div>
+
+                {/* Grid layout for Comparison & Expected Cutoffs */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* Left: Comparison Card */}
+                  <div className="glass-premium rounded-2xl p-5 border border-slate-100 space-y-4">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                      <span>📊 Comparison: 2022 vs 2026</span>
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      {/* BCI Vacancies */}
+                      <div className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div>
+                          <p className="text-xs font-bold text-slate-700">BCI Vacancies (कुल पद)</p>
+                          <p className="text-[10px] text-rose-500 font-semibold mt-0.5">📉 60% Seats Decreased</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-400 line-through">9,862 (2022)</span>
+                          <span className="text-sm font-extrabold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg">3,629 (2026)</span>
+                        </div>
+                      </div>
+
+                      {/* Exam Date */}
+                      <div className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div>
+                          <p className="text-xs font-bold text-slate-700">Exam Date (परीक्षा तिथि)</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-400">18 Jun 2022</span>
+                          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-lg">22 Aug 2026</span>
+                        </div>
+                      </div>
+
+                      {/* Competition */}
+                      <div className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div>
+                          <p className="text-xs font-bold text-slate-700">Competition Level (प्रतिस्पर्धा)</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-400 font-medium">कम</span>
+                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">उच्च (High)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50/50 border border-blue-100/50 p-3 rounded-xl">
+                      <p className="text-[10px] leading-relaxed text-blue-700">
+                        <strong>💡 मुख्य प्रभाव:</strong> रिक्तियों में भारी गिरावट और 2022 के साल्व्ड पेपर्स उपलब्ध होने के कारण अभ्यर्थियों के पास तैयारी के लिए बेहतर सामग्री है, जिससे औसत स्कोर बढ़ेगा।
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: Predicted Cutoff Card */}
+                  <div className="glass-premium rounded-2xl p-5 border border-slate-100 space-y-4">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                      <span>🎯 Expected SC Cutoff 2026 (out of 200)</span>
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      
+                      {/* Non-TSP */}
+                      <div className="p-4 bg-gradient-to-br from-indigo-50/30 to-indigo-100/10 border border-indigo-100/50 rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Non-TSP Area</span>
+                          <span className="text-[9px] bg-indigo-100 text-indigo-800 font-extrabold px-1.5 py-0.5 rounded">सामान्य</span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-semibold">SC Male:</span>
+                            <span className="font-extrabold text-indigo-850">128 – 138 Marks</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-semibold">SC Female:</span>
+                            <span className="font-extrabold text-indigo-850">122 – 132 Marks</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* TSP */}
+                      <div className="p-4 bg-gradient-to-br from-emerald-50/30 to-emerald-100/10 border border-emerald-100/50 rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">TSP Area</span>
+                          <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded">अनुसूचित</span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-semibold">SC Male:</span>
+                            <span className="font-extrabold text-emerald-850">110 – 120 Marks</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-semibold">SC Female:</span>
+                            <span className="font-extrabold text-emerald-850">105 – 115 Marks</span>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="p-3 bg-slate-50 border border-slate-200/50 rounded-xl flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">SC Safe Score (सुरक्षित स्कोर):</span>
+                      <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1 rounded-full">
+                        140+ Selection Packka
+                      </span>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Middle: Reason Cards */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">📈 कट-ऑफ बढ़ने के 3 मुख्य कारण</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <div className="glass-premium rounded-2xl p-5 border border-slate-100 space-y-2">
+                      <div className="text-xl">📉</div>
+                      <h5 className="text-xs font-bold text-slate-800">1. Vacancies में ~60% गिरावट</h5>
+                      <p className="text-[11px] leading-normal text-slate-500 font-semibold">
+                        2022 में रिक्तियों की संख्या 9,862 थी, जो अब 2026 में घटकर केवल 3,629 रह गई है। सीट घटने से सीधा स्पर्धा गुणांक बढ़ जाता है।
+                      </p>
+                    </div>
+
+                    <div className="glass-premium rounded-2xl p-5 border border-slate-100 space-y-2">
+                      <div className="text-xl">📖</div>
+                      <h5 className="text-xs font-bold text-slate-800">2. बढ़ा हुआ तैयारी स्तर</h5>
+                      <p className="text-[11px] leading-normal text-slate-500 font-semibold">
+                        2022 का वास्तविक प्रश्न-पत्र उपलब्ध है। अभ्यर्थियों को परीक्षा के पैटर्न और कठिनाई स्तर का पूरा अनुभव है, जिससे सब योजनाबद्ध तरीके से पढ़ रहे हैं।
+                      </p>
+                    </div>
+
+                    <div className="glass-premium rounded-2xl p-5 border border-slate-100 space-y-2">
+                      <div className="text-xl">🔥</div>
+                      <h5 className="text-xs font-bold text-slate-800">3. उच्चतर प्रतिस्पर्धा</h5>
+                      <p className="text-[11px] leading-normal text-slate-500 font-semibold">
+                        कंप्यूटर अनुदेशक क्षेत्र में सरकारी नौकरी के लिए अधिक आईटी और कंप्यूटर साइंस ग्रेजुएट्स इस परीक्षा में भाग ले रहे हैं।
+                      </p>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Bottom: Interactive Target Score Calculator */}
+                <div className="glass-premium rounded-2xl p-6 border border-slate-100 space-y-6">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-805 flex items-center gap-2">
+                      <span className="text-sm font-bold">🧮 Interactive SC Score Predictor (स्कोर कैलकुलेटर)</span>
+                      <span className="text-[10px] font-normal text-slate-400">(नकारात्मक अंक 1/3 के साथ)</span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      अपने अनुमानित सही और गलत उत्तरों को एडजस्ट करें और देखें कि क्या आप अनुसूचित जाति (SC) श्रेणी की कट-ऑफ और सुरक्षित स्कोर (Safe Score) को पार कर रहे हैं।
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
+                    
+                    {/* Sliders Input Area */}
+                    <div className="space-y-5">
+                      
+                      {/* Paper I Correct */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-700">Paper I Correct Answers (पेपर 1 सही उत्तर):</span>
+                          <span className="font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-md">{calcCorrectP1} / 100</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={calcCorrectP1}
+                          onChange={(e) => setCalcCorrectP1(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-650"
+                        />
+                      </div>
+
+                      {/* Paper II Correct */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-700">Paper II Correct Answers (पेपर 2 सही उत्तर):</span>
+                          <span className="font-extrabold text-sky-600 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md">{calcCorrectP2} / 100</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={calcCorrectP2}
+                          onChange={(e) => setCalcCorrectP2(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-sky-655"
+                        />
+                      </div>
+
+                      {/* Wrong Answers */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-700">Total Wrong Answers (कुल गलत उत्तर):</span>
+                          <span className="font-extrabold text-rose-600 bg-rose-50 border border-rose-100 px-2.5 py-0.5 rounded-md">{calcWrong} / 200</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={calcWrong}
+                          onChange={(e) => setCalcWrong(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-rose-550"
+                        />
+                        <p className="text-[10px] text-slate-400">
+                          * <strong>1/3 Negative Marking Penalty:</strong> प्रत्येक गलत उत्तर के लिए 0.33 अंक काटा जाएगा। (गलत उत्तर 20 से कम रखें)
+                        </p>
+                      </div>
+
+                    </div>
+
+                    {/* Result Visualizer Area */}
+                    <div className="flex flex-col justify-between p-5 bg-slate-50 border border-slate-200/60 rounded-2xl relative overflow-hidden">
+                      
+                      {/* Math Summary */}
+                      <div className="space-y-4">
+                        <div className="text-center">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Net Predicted Score</p>
+                          <p className="text-4xl font-black text-slate-800 mt-1">
+                            {((calcCorrectP1 + calcCorrectP2) - (calcWrong / 3)).toFixed(2)}
+                            <span className="text-xs font-semibold text-slate-400"> / 200</span>
+                          </p>
+                        </div>
+
+                        <div className="border-t border-slate-200 my-4 pt-3 space-y-2 text-xs">
+                          <div className="flex justify-between text-slate-600">
+                            <span>कुल सही उत्तर (Correct):</span>
+                            <span className="font-bold text-slate-800">{calcCorrectP1 + calcCorrectP2} Qs</span>
+                          </div>
+                          <div className="flex justify-between text-slate-600">
+                            <span>ऋणात्मक कटौती (Penalty):</span>
+                            <span className="font-bold text-rose-500">-{(calcWrong / 3).toFixed(2)} Marks</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status indicator */}
+                      <div className="mt-4">
+                        {((calcCorrectP1 + calcCorrectP2) - (calcWrong / 3)) >= 140 ? (
+                          <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-center">
+                            <p className="text-xs font-bold text-green-700">🟢 Safe Zone (चयन पक्का!)</p>
+                            <p className="text-[10px] text-green-600 mt-0.5">आपका स्कोर Non-TSP में सुरक्षित स्कोर 140+ से अधिक है।</p>
+                          </div>
+                        ) : ((calcCorrectP1 + calcCorrectP2) - (calcWrong / 3)) >= 128 ? (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                            <p className="text-xs font-bold text-amber-700">🟡 Target / Border Zone</p>
+                            <p className="text-[10px] text-amber-600 mt-0.5">अपेक्षित कट-ऑफ (128-138) के भीतर है। चयन की अच्छी संभावना है।</p>
+                          </div>
+                        ) : (
+                          <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-center">
+                            <p className="text-xs font-bold text-rose-700">🔴 Need Improvement (मेहनत करें)</p>
+                            <p className="text-[10px] text-rose-600 mt-0.5">कट-ऑफ 128+ तक पहुँचने के लिए और सही उत्तर दें तथा गलतियाँ कम करें।</p>
+                          </div>
+                        )}
+                      </div>
+
                     </div>
 
                   </div>
