@@ -1559,15 +1559,15 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-          <p className="text-gray-500 text-sm">Loading SSC Exam Portal...</p>
+          <p className="text-gray-500 text-sm">Loading CI Prep Hub...</p>
         </div>
       </div>
     );
   }
-
+ 
   // If not authenticated, don't render (redirect will happen)
   if (!user) return null;
-
+ 
   return (
     <div className="relative min-h-screen bg-[#f0f2f5] text-gray-900 overflow-hidden flex flex-col font-sans">
       
@@ -1575,29 +1575,31 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       <div className="glow-spot-indigo top-[-100px] left-[-50px] animate-pulse-slow"></div>
       <div className="glow-spot-emerald bottom-[-150px] right-[-50px] animate-pulse-slow"></div>
       <div className="glow-spot-rose top-[30%] right-[10%] opacity-40 animate-pulse-slow"></div>
-
-      {/* SSC Exam Header */}
-      <nav className="ssc-nav sticky top-0 z-40 py-3 px-6 md:px-12">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+ 
+      {/* Premium Navigation Header */}
+      <nav className="ssc-nav sticky top-0 z-40 py-2.5 px-3 sm:py-3 sm:px-6 md:px-12 bg-slate-900/90 backdrop-blur-md border-b border-white/10">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          
+          {/* Brand/Logo (Responsive Layout) */}
           <div 
             onClick={() => setView("dashboard")} 
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
           >
-            <div className="h-10 w-10 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-              <span className="text-lg font-extrabold text-yellow-400">SSC</span>
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors border border-white/10">
+              <span className="text-sm sm:text-lg font-black text-yellow-400">CI</span>
             </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-white">
-                CBT Exam Portal
+            <div className="hidden min-[350px]:block">
+              <h1 className="text-xs sm:text-sm md:text-base font-black tracking-tight text-white leading-none">
+                CI Prep Hub
               </h1>
-              <p className="text-[10px] uppercase tracking-widest text-blue-200 font-semibold leading-none mt-0.5">
-                Staff Selection Commission Simulator
+              <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-blue-200 font-bold leading-none mt-0.5 sm:mt-1">
+                Computer Instructor Portal
               </p>
             </div>
           </div>
-
-          {/* Quick study aids drawer toggles */}
-          <div className="flex items-center gap-2">
+ 
+          {/* Quick study aids drawer toggles (Responsive layout with text hiding on small screens) */}
+          <div className="flex items-center gap-1 sm:gap-2">
             <button
               onClick={() => {
                 setView(view === "syllabus" ? "dashboard" : "syllabus");
@@ -1605,70 +1607,77 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                 setShowCheatSheet(false);
                 setShowCalculator(false);
               }}
-              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+              className={`rounded-lg text-[10px] sm:text-xs font-semibold px-2 py-1.5 sm:px-3 sm:py-1.5 border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 view === "syllabus" ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
               }`}
             >
-              📋 Syllabus
+              <span>📋</span>
+              <span className="hidden sm:inline">Syllabus</span>
             </button>
+            
             <button
               onClick={() => {
                 setShowScratchpad(!showScratchpad);
                 if (view === "syllabus") setView("dashboard");
               }}
-              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+              className={`rounded-lg text-[10px] sm:text-xs font-semibold px-2 py-1.5 sm:px-3 sm:py-1.5 border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 showScratchpad ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
               }`}
             >
-              📝 Draft
+              <span>📝</span>
+              <span className="hidden sm:inline">Draft</span>
             </button>
+ 
             <button
               onClick={() => {
                 setShowCheatSheet(!showCheatSheet);
                 if (view === "syllabus") setView("dashboard");
               }}
-              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+              className={`rounded-lg text-[10px] sm:text-xs font-semibold px-2 py-1.5 sm:px-3 sm:py-1.5 border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 showCheatSheet ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
               }`}
             >
-              ⚡ Notes
+              <span>⚡</span>
+              <span className="hidden sm:inline">Notes</span>
             </button>
+ 
             <button
               onClick={() => {
                 setShowCalculator(!showCalculator);
                 if (view === "syllabus") setView("dashboard");
               }}
-              className={`rounded-lg text-xs font-semibold px-3 py-1.5 border transition-all cursor-pointer ${
+              className={`rounded-lg text-[10px] sm:text-xs font-semibold px-2 py-1.5 sm:px-3 sm:py-1.5 border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 showCalculator ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-blue-100 hover:text-white hover:bg-white/10"
               }`}
             >
-              🧮 Calc
+              <span>🧮</span>
+              <span className="hidden sm:inline">Calc</span>
             </button>
             
             <button
               onClick={() => setShowAdminPanel(!showAdminPanel)}
-              className="hidden sm:flex rounded-lg bg-yellow-400 hover:bg-yellow-300 text-xs font-bold px-4 py-2 items-center gap-1 text-gray-900 transition-all cursor-pointer shadow-sm"
+              className="hidden md:flex rounded-lg bg-yellow-400 hover:bg-yellow-300 text-[10px] sm:text-xs font-bold px-3 py-1.5 items-center gap-1 text-gray-900 transition-all cursor-pointer shadow-sm shrink-0"
             >
-              <PlusIcon size={14} />
+              <PlusIcon size={12} />
               <span>Add Question</span>
             </button>
-
+ 
             {/* User Profile & Logout */}
-            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-white/20">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 ml-1 sm:ml-2 pl-1 sm:pl-2 border-l border-white/20 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {user.photoURL ? (
                   <img
                     src={user.photoURL}
                     alt="Profile"
-                    className="w-8 h-8 rounded-full border-2 border-white/50"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/50"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-xs font-bold text-gray-900">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-yellow-400 flex items-center justify-center text-[10px] sm:text-xs font-bold text-gray-900">
                     {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="hidden md:inline text-xs text-blue-100 max-w-[120px] truncate">
+                <span className="hidden lg:inline text-[10px] sm:text-xs text-blue-100 max-w-[80px] sm:max-w-[120px] truncate">
                   {user.displayName || user.email}
                 </span>
               </div>
@@ -2840,37 +2849,51 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                           <tbody className="divide-y divide-slate-100">
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Reasoning (तर्कशक्ति)</td>
-                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="51,52,54,55,56,57,59,60,61,67,68,69,70,71,72,73,74,77,86,88,89,90,91,92,93,94,95,96,97,98">51-61, 67-74, 77, 86, 88-98</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                51, 52, 54, 55, 56, 57, 59, 60, 61, 67, 68, 69, 70, 71, 72, 73, 74, 77, 86, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98
+                              </td>
                               <td className="px-3 py-2 text-center font-extrabold text-indigo-600 bg-indigo-50/40">30 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">गणित (Mathematics)</td>
-                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="53,58,62,63,64,65,66,75,76,78,79,80,81,82,83,84,85,87,99,100">53, 58, 62-66, 75-76, 78-85, 87, 99-100</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                53, 58, 62, 63, 64, 65, 66, 75, 76, 78, 79, 80, 81, 82, 83, 84, 85, 87, 99, 100
+                              </td>
                               <td className="px-3 py-2 text-center font-bold text-slate-700">20 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">राजस्थान कला-संस्कृति</td>
-                              <td className="px-3 py-2 text-slate-500">5, 6, 7, 8, 9, 10, 12, 17, 18, 19, 20</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                5, 6, 7, 8, 9, 10, 12, 17, 18, 19, 20
+                              </td>
                               <td className="px-3 py-2 text-center font-semibold text-slate-600">11 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">राजस्थान भूगोल</td>
-                              <td className="px-3 py-2 text-slate-500">31, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                31, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50
+                              </td>
                               <td className="px-3 py-2 text-center font-semibold text-slate-600">11 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">राजस्थान इतिहास</td>
-                              <td className="px-3 py-2 text-slate-500">1, 2, 3, 4, 11, 13, 14, 26</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                1, 2, 3, 4, 11, 13, 14, 26
+                              </td>
                               <td className="px-3 py-2 text-center font-medium text-slate-600">8 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">समसामयिक (Current Affairs)</td>
-                              <td className="px-3 py-2 text-slate-500">21, 22, 23, 24, 25, 27, 28, 29, 30</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                21, 22, 23, 24, 25, 27, 28, 29, 30
+                              </td>
                               <td className="px-3 py-2 text-center font-medium text-slate-600">9 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">सामान्य विज्ञान (Science)</td>
-                              <td className="px-3 py-2 text-slate-500">32, 33, 34, 35, 36, 37, 38, 39, 40</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                32, 33, 34, 35, 36, 37, 38, 39, 40
+                              </td>
                               <td className="px-3 py-2 text-center font-medium text-slate-600">9 Qs</td>
                             </tr>
                           </tbody>
@@ -2899,57 +2922,79 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                           <tbody className="divide-y divide-slate-100">
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">DBMS (डेटाबेस मैनेजमेंट)</td>
-                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="18,19,21,23,49,52,60,61,64,65,66,67,68,69,90">18-19, 21, 23, 49, 52, 60-61, 64-69, 90</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                18, 19, 21, 23, 49, 52, 60, 61, 64, 65, 66, 67, 68, 69, 90
+                              </td>
                               <td className="px-3 py-2 text-center font-extrabold text-sky-600 bg-sky-50/40">15 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">MS Office (Excel/Word/PPT)</td>
-                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="15,16,17,27,28,37,38,39,41,42,43,81">15-17, 27-28, 37-39, 41-43, 81</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                15, 16, 17, 27, 28, 37, 38, 39, 41, 42, 43, 81
+                              </td>
                               <td className="px-3 py-2 text-center font-bold text-slate-700">12 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Computer Org & OS</td>
-                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="44,45,46,47,48,57,74,75,82,85,86,87">44-48, 57, 74-75, 82, 85-87</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                44, 45, 46, 47, 48, 57, 74, 75, 82, 85, 86, 87
+                              </td>
                               <td className="px-3 py-2 text-center font-bold text-slate-700">12 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Programming (C/C++/Java/Python)</td>
-                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="58,84,88,91,92,94,95,96,97,98,99,100">58, 84, 88, 91-92, 94-100</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                58, 84, 88, 91, 92, 94, 95, 96, 97, 98, 99, 100
+                              </td>
                               <td className="px-3 py-2 text-center font-bold text-slate-700">12 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Networking & Internet</td>
-                              <td className="px-3 py-2 text-slate-500">14, 20, 29, 31, 32, 33, 40, 78, 79</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                14, 20, 29, 31, 32, 33, 40, 78, 79
+                              </td>
                               <td className="px-3 py-2 text-center font-semibold text-slate-600">9 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Intellectual/Reasoning</td>
-                              <td className="px-3 py-2 text-slate-500">5, 6, 7, 8, 9, 10, 11, 12</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                5, 6, 7, 8, 9, 10, 11, 12
+                              </td>
                               <td className="px-3 py-2 text-center font-semibold text-slate-600">8 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Network Security (फायरवॉल/वायरस)</td>
-                              <td className="px-3 py-2 text-slate-500">24, 70, 71, 72, 73, 76, 77, 83</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                24, 70, 71, 72, 73, 76, 77, 83
+                              </td>
                               <td className="px-3 py-2 text-center font-semibold text-slate-600">8 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">DS & Algorithms</td>
-                              <td className="px-3 py-2 text-slate-500">13, 22, 34, 35, 36, 63, 80</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                13, 22, 34, 35, 36, 63, 80
+                              </td>
                               <td className="px-3 py-2 text-center font-medium text-slate-600">7 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">System Analysis & Design</td>
-                              <td className="px-3 py-2 text-slate-500">25, 50, 51, 53, 54, 55, 56</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                25, 50, 51, 53, 54, 55, 56
+                              </td>
                               <td className="px-3 py-2 text-center font-medium text-slate-600">7 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Pedagogy (शिक्षा शास्त्र)</td>
-                              <td className="px-3 py-2 text-slate-500">1, 2, 3, 4</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                1, 2, 3, 4
+                              </td>
                               <td className="px-3 py-2 text-center font-medium text-slate-600">4 Qs</td>
                             </tr>
                             <tr className="hover:bg-slate-50/50">
                               <td className="px-3 py-2 font-semibold text-slate-700">Fundamentals & IoT/Web</td>
-                              <td className="px-3 py-2 text-slate-500">30 (Comp Fund), 26 (IoT)</td>
+                              <td className="px-3 py-2 text-slate-500 whitespace-normal break-words max-w-[220px]">
+                                30, 26
+                              </td>
                               <td className="px-3 py-2 text-center font-medium text-slate-600">2 Qs</td>
                             </tr>
                           </tbody>
