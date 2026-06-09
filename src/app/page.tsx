@@ -2806,6 +2806,181 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                   </div>
                 </div>
 
+                {/* 2022 REAL EXAM QUESTION DISTRIBUTION ANALYSIS */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden space-y-5 p-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                      <span>📊 2022 वास्तविक प्रश्न-पत्र विश्लेषण (2022 Exam Topic Analysis)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      कम्प्यूटर अनुदेशक भर्ती परीक्षा — 2022 के दोनों प्रश्न-पत्रों में पूछे गए प्रश्नों का टॉपिक-वार विश्लेषण। इससे आपको यह समझने में मदद मिलेगी कि किस विषय से कितने प्रश्न पूछे जाते हैं।
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    {/* Paper I Analysis */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h4 className="text-xs font-bold text-indigo-700 flex items-center gap-1.5">
+                          <span>📄 PAPER – I (Q.1–100) विश्लेषण</span>
+                        </h4>
+                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">100 Qs</span>
+                      </div>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-100 text-slate-500">
+                              <th className="px-3 py-2 font-bold">विषय (Topic)</th>
+                              <th className="px-3 py-2 font-bold">प्रश्न संख्या (Q. Numbers)</th>
+                              <th className="px-3 py-2 font-bold text-center">प्रश्नों की संख्या</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Reasoning (तर्कशक्ति)</td>
+                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="51,52,54,55,56,57,59,60,61,67,68,69,70,71,72,73,74,77,86,88,89,90,91,92,93,94,95,96,97,98">51-61, 67-74, 77, 86, 88-98</td>
+                              <td className="px-3 py-2 text-center font-extrabold text-indigo-600 bg-indigo-50/40">30 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">गणित (Mathematics)</td>
+                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="53,58,62,63,64,65,66,75,76,78,79,80,81,82,83,84,85,87,99,100">53, 58, 62-66, 75-76, 78-85, 87, 99-100</td>
+                              <td className="px-3 py-2 text-center font-bold text-slate-700">20 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">राजस्थान कला-संस्कृति</td>
+                              <td className="px-3 py-2 text-slate-500">5, 6, 7, 8, 9, 10, 12, 17, 18, 19, 20</td>
+                              <td className="px-3 py-2 text-center font-semibold text-slate-600">11 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">राजस्थान भूगोल</td>
+                              <td className="px-3 py-2 text-slate-500">31, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50</td>
+                              <td className="px-3 py-2 text-center font-semibold text-slate-600">11 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">राजस्थान इतिहास</td>
+                              <td className="px-3 py-2 text-slate-500">1, 2, 3, 4, 11, 13, 14, 26</td>
+                              <td className="px-3 py-2 text-center font-medium text-slate-600">8 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">समसामयिक (Current Affairs)</td>
+                              <td className="px-3 py-2 text-slate-500">21, 22, 23, 24, 25, 27, 28, 29, 30</td>
+                              <td className="px-3 py-2 text-center font-medium text-slate-600">9 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">सामान्य विज्ञान (Science)</td>
+                              <td className="px-3 py-2 text-slate-500">32, 33, 34, 35, 36, 37, 38, 39, 40</td>
+                              <td className="px-3 py-2 text-center font-medium text-slate-600">9 Qs</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Paper II Analysis */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h4 className="text-xs font-bold text-sky-700 flex items-center gap-1.5">
+                          <span>💻 PAPER – II (Q.1–100) विश्लेषण</span>
+                        </h4>
+                        <span className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">100 Qs</span>
+                      </div>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-100 text-slate-500">
+                              <th className="px-3 py-2 font-bold">विषय (Topic)</th>
+                              <th className="px-3 py-2 font-bold">प्रश्न संख्या (Q. Numbers)</th>
+                              <th className="px-3 py-2 font-bold text-center">प्रश्नों की संख्या</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">DBMS (डेटाबेस मैनेजमेंट)</td>
+                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="18,19,21,23,49,52,60,61,64,65,66,67,68,69,90">18-19, 21, 23, 49, 52, 60-61, 64-69, 90</td>
+                              <td className="px-3 py-2 text-center font-extrabold text-sky-600 bg-sky-50/40">15 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">MS Office (Excel/Word/PPT)</td>
+                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="15,16,17,27,28,37,38,39,41,42,43,81">15-17, 27-28, 37-39, 41-43, 81</td>
+                              <td className="px-3 py-2 text-center font-bold text-slate-700">12 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Computer Org & OS</td>
+                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="44,45,46,47,48,57,74,75,82,85,86,87">44-48, 57, 74-75, 82, 85-87</td>
+                              <td className="px-3 py-2 text-center font-bold text-slate-700">12 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Programming (C/C++/Java/Python)</td>
+                              <td className="px-3 py-2 text-slate-500 max-w-[180px] truncate" title="58,84,88,91,92,94,95,96,97,98,99,100">58, 84, 88, 91-92, 94-100</td>
+                              <td className="px-3 py-2 text-center font-bold text-slate-700">12 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Networking & Internet</td>
+                              <td className="px-3 py-2 text-slate-500">14, 20, 29, 31, 32, 33, 40, 78, 79</td>
+                              <td className="px-3 py-2 text-center font-semibold text-slate-600">9 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Intellectual/Reasoning</td>
+                              <td className="px-3 py-2 text-slate-500">5, 6, 7, 8, 9, 10, 11, 12</td>
+                              <td className="px-3 py-2 text-center font-semibold text-slate-600">8 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Network Security (फायरवॉल/वायरस)</td>
+                              <td className="px-3 py-2 text-slate-500">24, 70, 71, 72, 73, 76, 77, 83</td>
+                              <td className="px-3 py-2 text-center font-semibold text-slate-600">8 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">DS & Algorithms</td>
+                              <td className="px-3 py-2 text-slate-500">13, 22, 34, 35, 36, 63, 80</td>
+                              <td className="px-3 py-2 text-center font-medium text-slate-600">7 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">System Analysis & Design</td>
+                              <td className="px-3 py-2 text-slate-500">25, 50, 51, 53, 54, 55, 56</td>
+                              <td className="px-3 py-2 text-center font-medium text-slate-600">7 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Pedagogy (शिक्षा शास्त्र)</td>
+                              <td className="px-3 py-2 text-slate-500">1, 2, 3, 4</td>
+                              <td className="px-3 py-2 text-center font-medium text-slate-600">4 Qs</td>
+                            </tr>
+                            <tr className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-semibold text-slate-700">Fundamentals & IoT/Web</td>
+                              <td className="px-3 py-2 text-slate-500">30 (Comp Fund), 26 (IoT)</td>
+                              <td className="px-3 py-2 text-center font-medium text-slate-600">2 Qs</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Key Highlights box */}
+                  <div className="bg-indigo-50/40 border border-indigo-100 p-4 rounded-xl space-y-2.5">
+                    <h5 className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                      <span>🔑 परीक्षा विश्लेषण (Key Analysis Highlights):</span>
+                    </h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <p className="font-bold text-slate-700">Paper-I मुख्य विषय:</p>
+                        <p className="text-slate-600 mt-1">
+                          <strong>तर्कशक्ति (Reasoning)</strong> से सर्वाधिक 30 प्रश्न पूछे गए। इसके बाद <strong>गणित</strong> (20 प्रश्न) तथा <strong>कला-संस्कृति</strong> व <strong>भूगोल</strong> (11-11 प्रश्न) प्रमुख रहे।
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-700">Paper-II मुख्य विषय:</p>
+                        <p className="text-slate-600 mt-1">
+                          <strong>DBMS</strong> से सर्वाधिक 15 प्रश्न पूछे गए। इसके बाद <strong>MS Office</strong>, <strong>Computer Org. & OS</strong>, और <strong>Programming</strong> (प्रत्येक से 12 प्रश्न) प्रमुख रहे।
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Subject Summary Progress Grid */}
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">विषयवार प्रगति (Subject-wise Summary)</h4>
