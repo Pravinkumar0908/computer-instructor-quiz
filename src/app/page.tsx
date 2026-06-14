@@ -466,6 +466,187 @@ export default function ExamPrepPortal() {
   const [calcCorrectP2, setCalcCorrectP2] = useState<number>(70);
   const [calcWrong, setCalcWrong] = useState<number>(15);
 
+  // ═══════════════════════════════════════════════════
+  // PHASE 2: EXAM COUNTDOWN TIMER
+  // ═══════════════════════════════════════════════════
+  const EXAM_DATE = new Date('2026-08-23T09:00:00+05:30');
+  const [examCountdown, setExamCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [countdownUrgency, setCountdownUrgency] = useState<'safe' | 'warning' | 'danger' | 'critical'>('safe');
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = EXAM_DATE.getTime() - now.getTime();
+      if (diff <= 0) {
+        setExamCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setCountdownUrgency('critical');
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setExamCountdown({ days, hours, minutes, seconds });
+      if (days < 1) setCountdownUrgency('critical');
+      else if (days < 7) setCountdownUrgency('danger');
+      else if (days < 30) setCountdownUrgency('warning');
+      else setCountdownUrgency('safe');
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Motivational Quotes Array
+  const MOTIVATIONAL_QUOTES = [
+    { hi: "सफलता उन्हीं को मिलती है जो मेहनत करते हैं 💪", en: "Success comes to those who work hard" },
+    { hi: "हर दिन एक नई शुरुआत है 🌅", en: "Every day is a new beginning" },
+    { hi: "तैयारी में कमी मत छोड़ो, परीक्षा आसान लगेगी 📚", en: "Don't leave gaps in preparation" },
+    { hi: "आज की मेहनत, कल की सफलता है ✨", en: "Today's effort is tomorrow's success" },
+    { hi: "असंभव वही है जो आप कोशिश न करें 🚀", en: "Impossible is what you don't try" },
+    { hi: "धीरे-धीरे, लेकिन रुकना नहीं है 🐢", en: "Slowly but never stop" },
+    { hi: "कठिन परिश्रम का कोई विकल्प नहीं है 🔥", en: "There is no substitute for hard work" },
+    { hi: "हर सवाल हल करो, हर दिन बेहतर बनो 📖", en: "Solve every question, get better every day" },
+    { hi: "विश्वास रखो, तुम यह कर सकते हो! 🌟", en: "Believe in yourself, you can do it!" },
+    { hi: "सपने वो नहीं जो नींद में दिखें, सपने वो हैं जो नींद न आने दें 🎯", en: "Dreams don't let you sleep" },
+    { hi: "आज का एक घंटा, कल के दस अंक बचाएगा ⏰", en: "One hour today saves ten marks tomorrow" },
+    { hi: "कम्प्यूटर अनुदेशक बनना है, तो अभी से शुरू करो! 💻", en: "Want to be a Computer Instructor? Start now!" },
+    { hi: "गिरकर संभलने वाले ही चैंपियन बनते हैं 🏆", en: "Champions rise after falling" },
+    { hi: "एक-एक टॉपिक करो, सिलेबस खत्म हो जाएगा 📋", en: "Topic by topic, syllabus will be done" },
+    { hi: "तुम्हारा सबसे बड़ा प्रतियोगी कल का तुम हो 🪞", en: "Your biggest competitor is yesterday's you" },
+    { hi: "Mock Test दो, गलतियों से सीखो, आगे बढ़ो 🎓", en: "Take mocks, learn from mistakes, move ahead" },
+    { hi: "सरकारी नौकरी तुम्हारा इंतज़ार कर रही है! 🏛️", en: "Government job is waiting for you!" },
+    { hi: "हर रोज़ 50 प्रश्न = परीक्षा में 100% तैयारी 💯", en: "50 questions daily = 100% preparation" },
+    { hi: "पढ़ाई में मन लगाओ, रिजल्ट खुद आएगा 📝", en: "Focus on study, results will follow" },
+    { hi: "जब तक हासिल न हो, तब तक आराम हराम है 🔒", en: "No rest until the goal is achieved" },
+    { hi: "DBMS, OS, DSA — ये तीन मास्टर करो, पेपर आसान! 🖥️", en: "Master DBMS, OS, DSA — paper becomes easy!" },
+    { hi: "Negative marking से डरो मत, सही उत्तर सीखो ✅", en: "Don't fear negative marking, learn correct answers" },
+    { hi: "छोटे-छोटे कदम, बड़ी मंज़िल तक ले जाते हैं 👣", en: "Small steps lead to big destinations" },
+    { hi: "तैयारी + आत्मविश्वास = सफलता 🎯", en: "Preparation + Confidence = Success" },
+    { hi: "आज Revision करो, परीक्षा में Marks पक्के! 📊", en: "Revise today, marks guaranteed in exam!" },
+    { hi: "23 अगस्त 2026 — तुम्हारा दिन है! 🗓️", en: "23 August 2026 — It's YOUR day!" },
+    { hi: "हर Mock Test एक सीढ़ी है सफलता की ओर 🪜", en: "Every mock test is a step toward success" },
+    { hi: "Focus रखो, Phone रखो, Book उठाओ! 📵", en: "Stay focused, put phone down, pick up the book!" },
+    { hi: "तुम अकेले नहीं हो, CI Prep Hub तुम्हारे साथ है! 🤝", en: "You're not alone, CI Prep Hub is with you!" },
+    { hi: "परीक्षा कठिन है, लेकिन तुम उससे भी कठिन हो! 💎", en: "Exam is tough, but you are tougher!" },
+  ];
+
+  const todayQuote = useMemo(() => {
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
+  }, []);
+
+  // ═══════════════════════════════════════════════════
+  // PHASE 3: STUDY STREAK & DAILY TARGET
+  // ═══════════════════════════════════════════════════
+  const [studyStreak, setStudyStreak] = useState(0);
+  const [lastStudyDate, setLastStudyDate] = useState<string>('');
+  const [dailyQuestionsTarget] = useState(20);
+  const [dailyQuestionsSolved, setDailyQuestionsSolved] = useState(0);
+  const [showStreakCelebration, setShowStreakCelebration] = useState(false);
+
+  // Achievement Badges
+  const [achievements, setAchievements] = useState<string[]>([]);
+
+  const ACHIEVEMENT_LIST = [
+    { id: 'first_mock', emoji: '🎓', title: 'First Mock Test', desc: 'पहला Mock Test दिया', condition: (s: DashboardStats | null) => (s?.totalAttempts || 0) >= 1 },
+    { id: 'ten_attempts', emoji: '🔟', title: '10 Tests Done', desc: '10 Mock Tests पूरे किए', condition: (s: DashboardStats | null) => (s?.totalAttempts || 0) >= 10 },
+    { id: 'accuracy_70', emoji: '🏆', title: '70%+ Accuracy', desc: '70% या उससे ज्यादा Accuracy', condition: (s: DashboardStats | null) => (s?.averageAccuracy || 0) >= 70 },
+    { id: 'accuracy_90', emoji: '💎', title: '90%+ Accuracy', desc: '90% Accuracy मास्टर!', condition: (s: DashboardStats | null) => (s?.averageAccuracy || 0) >= 90 },
+    { id: 'streak_7', emoji: '🔥', title: '7-Day Streak', desc: 'लगातार 7 दिन पढ़ाई', condition: () => studyStreak >= 7 },
+    { id: 'streak_30', emoji: '⚡', title: '30-Day Streak', desc: '30 दिन का शानदार Streak!', condition: () => studyStreak >= 30 },
+    { id: 'syllabus_50', emoji: '📋', title: 'Half Syllabus', desc: '50% Syllabus पूरा!', condition: () => totalTopics > 0 && (completedTotalCount / totalTopics) >= 0.5 },
+    { id: 'syllabus_100', emoji: '🌟', title: 'Full Syllabus', desc: '100% Syllabus Complete!', condition: () => totalTopics > 0 && completedTotalCount >= totalTopics },
+  ];
+
+  // Pomodoro Focus Timer
+  const [pomodoroActive, setPomodoroActive] = useState(false);
+  const [pomodoroTime, setPomodoroTime] = useState(25 * 60); // 25 minutes
+  const [pomodoroMode, setPomodoroMode] = useState<'focus' | 'break'>('focus');
+  const [showPomodoro, setShowPomodoro] = useState(false);
+  const [totalFocusMinutes, setTotalFocusMinutes] = useState(0);
+
+  // Initialize streak & daily tracker from localStorage
+  useEffect(() => {
+    try {
+      const storedStreak = localStorage.getItem('ci_study_streak');
+      const storedLastDate = localStorage.getItem('ci_last_study_date');
+      const storedDaily = localStorage.getItem('ci_daily_solved');
+      const storedDailyDate = localStorage.getItem('ci_daily_date');
+      const storedAchievements = localStorage.getItem('ci_achievements');
+      const storedFocus = localStorage.getItem('ci_focus_minutes');
+
+      if (storedStreak) setStudyStreak(parseInt(storedStreak));
+      if (storedLastDate) setLastStudyDate(storedLastDate);
+      if (storedAchievements) setAchievements(JSON.parse(storedAchievements));
+      if (storedFocus) setTotalFocusMinutes(parseInt(storedFocus));
+
+      const today = new Date().toISOString().split('T')[0];
+      if (storedDailyDate === today && storedDaily) {
+        setDailyQuestionsSolved(parseInt(storedDaily));
+      } else {
+        localStorage.setItem('ci_daily_date', today);
+        localStorage.setItem('ci_daily_solved', '0');
+      }
+    } catch (e) { console.error(e); }
+  }, []);
+
+  // Record study activity (called after mock/practice submit)
+  const recordStudyActivity = (questionCount: number) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const newDailySolved = dailyQuestionsSolved + questionCount;
+      setDailyQuestionsSolved(newDailySolved);
+      localStorage.setItem('ci_daily_solved', newDailySolved.toString());
+      localStorage.setItem('ci_daily_date', today);
+
+      // Update streak
+      if (lastStudyDate !== today) {
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        const newStreak = lastStudyDate === yesterday ? studyStreak + 1 : 1;
+        setStudyStreak(newStreak);
+        setLastStudyDate(today);
+        localStorage.setItem('ci_study_streak', newStreak.toString());
+        localStorage.setItem('ci_last_study_date', today);
+
+        // Show celebration for milestone streaks
+        if ([7, 15, 30, 50, 100].includes(newStreak)) {
+          setShowStreakCelebration(true);
+          setTimeout(() => setShowStreakCelebration(false), 3000);
+        }
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  // Pomodoro Timer Logic
+  useEffect(() => {
+    if (!pomodoroActive) return;
+    if (pomodoroTime <= 0) {
+      // Timer complete
+      if (pomodoroMode === 'focus') {
+        const newMinutes = totalFocusMinutes + 25;
+        setTotalFocusMinutes(newMinutes);
+        localStorage.setItem('ci_focus_minutes', newMinutes.toString());
+        setPomodoroMode('break');
+        setPomodoroTime(5 * 60); // 5 min break
+      } else {
+        setPomodoroMode('focus');
+        setPomodoroTime(25 * 60); // 25 min focus
+      }
+      setPomodoroActive(false);
+      // Audio notification
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczEjqIwN/RfUEcN4m/2tZ+Qhw1h77a135CHjWGvtrXfUIeNYW92td+Qh81hb3a135EHzWFvdrWfUMgNYW92tZ+RCA1hbza1n5EIDWF');
+        audio.play().catch(() => {});
+      } catch {}
+      return;
+    }
+    const interval = setInterval(() => setPomodoroTime(p => p - 1), 1000);
+    return () => clearInterval(interval);
+  }, [pomodoroActive, pomodoroTime]);
+
+  // NOTE: Achievement check, studyPlan, and performanceBars are placed AFTER completedTotalCount declaration below
+
   // Load completed syllabus topics from localStorage on mount
   useEffect(() => {
     try {
@@ -551,6 +732,39 @@ export default function ExamPrepPortal() {
 
   const totalTopics = totalPaper1Topics + totalPaper2Topics;
   const completedTotalCount = completedPaper1Count + completedPaper2Count;
+
+  // Check achievements whenever stats change
+  useEffect(() => {
+    if (!stats) return;
+    const newAchievements: string[] = [];
+    ACHIEVEMENT_LIST.forEach(a => {
+      if (a.condition(stats)) newAchievements.push(a.id);
+    });
+    if (JSON.stringify(newAchievements.sort()) !== JSON.stringify(achievements.sort())) {
+      setAchievements(newAchievements);
+      localStorage.setItem('ci_achievements', JSON.stringify(newAchievements));
+    }
+  }, [stats, studyStreak, completedTotalCount]);
+
+  // Smart Study Planner computation
+  const studyPlan = useMemo(() => {
+    const daysLeft = examCountdown.days;
+    const topicsLeft = totalTopics - completedTotalCount;
+    const topicsPerDay = daysLeft > 0 ? Math.ceil(topicsLeft / daysLeft) : topicsLeft;
+    const paper1Left = totalPaper1Topics - completedPaper1Count;
+    const paper2Left = totalPaper2Topics - completedPaper2Count;
+    return { daysLeft, topicsLeft, topicsPerDay, paper1Left, paper2Left };
+  }, [examCountdown.days, totalTopics, completedTotalCount, totalPaper1Topics, totalPaper2Topics, completedPaper1Count, completedPaper2Count]);
+
+  // Performance Analytics (last 10 attempts accuracy bars)
+  const performanceBars = useMemo(() => {
+    const attempts = stats?.recentAttempts || [];
+    return attempts.slice(0, 10).map(a => ({
+      score: a.score,
+      category: a.category?.split(' ')[0] || 'Test',
+      date: a.timestamp
+    }));
+  }, [stats]);
 
   const filteredPaper1 = useMemo(() => {
     if (!syllabusSearch.trim()) return SYLLABUS_DATA.paper1;
@@ -961,6 +1175,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       answers: practiceAnswers
     });
 
+    recordStudyActivity(practiceQuestions.length);
     setView("results");
 
     // Save dynamically to backend
@@ -1169,6 +1384,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
       answers: mockAnswers
     });
 
+    recordStudyActivity(mockQuestions.length);
     setView("results");
 
     // Save dynamic attempt to backend Database
@@ -1556,10 +1772,18 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   // Show loading while auth is being determined
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-          <p className="text-gray-500 text-sm">Loading CI Prep Hub...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#080c18' }}>
+        <div className="flex flex-col items-center gap-5">
+          <div className="relative">
+            <div className="w-14 h-14 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs font-black text-indigo-400">CI</span>
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="text-indigo-300 text-sm font-bold">CI Prep Hub</p>
+            <p className="text-slate-500 text-[10px] mt-1">Loading your exam portal...</p>
+          </div>
         </div>
       </div>
     );
@@ -1569,15 +1793,27 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
   if (!user) return null;
  
   return (
-    <div className="relative min-h-screen bg-[#f0f2f5] text-gray-900 overflow-hidden flex flex-col font-sans">
+    <div className="relative min-h-screen overflow-hidden flex flex-col" style={{ background: '#080c18', color: '#f1f5f9', fontFamily: "'Inter', system-ui, sans-serif" }}>
       
-      {/* Background Glowing Spots */}
+      {/* Background Mesh Gradient */}
+      <div className="mesh-bg"></div>
       <div className="glow-spot-indigo top-[-100px] left-[-50px] animate-pulse-slow"></div>
       <div className="glow-spot-emerald bottom-[-150px] right-[-50px] animate-pulse-slow"></div>
       <div className="glow-spot-rose top-[30%] right-[10%] opacity-40 animate-pulse-slow"></div>
+      
+      {/* Streak Celebration Overlay */}
+      {showStreakCelebration && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="text-center animate-slide-up">
+            <div className="text-6xl mb-4 animate-streak">🔥</div>
+            <h2 className="text-3xl font-black text-white mb-2">{studyStreak}-Day Streak!</h2>
+            <p className="text-indigo-300 text-sm">शानदार! लगातार {studyStreak} दिन पढ़ाई जारी है! 💪</p>
+          </div>
+        </div>
+      )}
  
       {/* Premium Navigation Header */}
-      <nav className="ssc-nav sticky top-0 z-40 py-2.5 px-3 sm:py-3 sm:px-6 md:px-12 bg-slate-900/90 backdrop-blur-md border-b border-white/10">
+      <nav className="ssc-nav sticky top-0 z-40 py-2.5 px-3 sm:py-3 sm:px-6 md:px-12">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           
           {/* Brand/Logo (Responsive Layout) */}
@@ -1585,17 +1821,24 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             onClick={() => setView("dashboard")} 
             className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
           >
-            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors border border-white/10">
-              <span className="text-sm sm:text-lg font-black text-yellow-400">CI</span>
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center group-hover:from-indigo-400 group-hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/20 border border-indigo-400/20">
+              <span className="text-sm sm:text-lg font-black text-white">CI</span>
             </div>
             <div className="hidden min-[350px]:block">
               <h1 className="text-xs sm:text-sm md:text-base font-black tracking-tight text-white leading-none">
                 CI Prep Hub
               </h1>
-              <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-blue-200 font-bold leading-none mt-0.5 sm:mt-1">
-                Computer Instructor Portal
+              <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-indigo-300 font-bold leading-none mt-0.5 sm:mt-1">
+                Exam 2026 Portal
               </p>
             </div>
+            {/* Streak Badge in Header */}
+            {studyStreak > 0 && (
+              <div className="streak-badge ml-1 animate-streak">
+                <span>🔥</span>
+                <span>{studyStreak}</span>
+              </div>
+            )}
           </div>
  
           {/* Quick study aids drawer toggles (Responsive layout with text hiding on small screens) */}
@@ -1654,9 +1897,24 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
               <span className="hidden sm:inline">Calc</span>
             </button>
             
+            {/* Pomodoro Focus Timer Toggle */}
+            <button
+              onClick={() => {
+                setShowPomodoro(!showPomodoro);
+                if (view === "syllabus") setView("dashboard");
+              }}
+              className={`rounded-lg text-[10px] sm:text-xs font-semibold px-2 py-1.5 sm:px-3 sm:py-1.5 border transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                showPomodoro ? "bg-white/20 border-white/30 text-white" : "bg-white/5 border-white/10 text-indigo-200 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <span>🍅</span>
+              <span className="hidden sm:inline">Focus</span>
+              {pomodoroActive && <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></span>}
+            </button>
+
             <button
               onClick={() => setShowAdminPanel(!showAdminPanel)}
-              className="hidden md:flex rounded-lg bg-yellow-400 hover:bg-yellow-300 text-[10px] sm:text-xs font-bold px-3 py-1.5 items-center gap-1 text-gray-900 transition-all cursor-pointer shadow-sm shrink-0"
+              className="hidden md:flex rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-[10px] sm:text-xs font-bold px-3 py-1.5 items-center gap-1 text-white transition-all cursor-pointer shadow-lg shadow-indigo-500/20 shrink-0"
             >
               <PlusIcon size={12} />
               <span>Add Question</span>
@@ -1673,7 +1931,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-yellow-400 flex items-center justify-center text-[10px] sm:text-xs font-bold text-gray-900">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[10px] sm:text-xs font-bold text-white">
                     {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -2086,87 +2344,257 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
         {view === "dashboard" && (
           <div className="space-y-6 animate-fade-in">
             
-            {/* SSC Dashboard Hero */}
-            <div className="glass-premium rounded-2xl p-6 md:p-8 relative overflow-hidden">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700 border border-blue-200 uppercase tracking-wider">
-                      SSC / RSMSSB / KVS
+            {/* ═══ EXAM COUNTDOWN TIMER HERO ═══ */}
+            <div className="glass-premium rounded-3xl p-6 md:p-8 relative overflow-hidden animate-neon">
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
+              
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center rounded-lg bg-indigo-500/10 px-2.5 py-1 text-[10px] font-bold text-indigo-300 border border-indigo-500/20 uppercase tracking-wider">
+                      RSMSSB 2026
                     </span>
-                    <span className="inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700 border border-green-200">
-                      🟢 Online
+                    <span className="inline-flex items-center rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-400 border border-emerald-500/20">
+                      🟢 Live Portal
                     </span>
+                    {studyStreak > 0 && (
+                      <span className="inline-flex items-center rounded-lg bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold text-amber-400 border border-amber-500/20 animate-streak">
+                        🔥 {studyStreak}-Day Streak
+                      </span>
+                    )}
                   </div>
-                  <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                    Computer Instructor CBT Practice
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+                    <span className="gradient-text">Computer Instructor</span>
+                    <span className="text-slate-300"> CBT Exam</span>
                   </h2>
-                  <p className="text-sm text-gray-500 max-w-xl">
-                    कम्प्यूटर अनुदेशक परीक्षा की तैयारी करें — {questions.length} प्रश्न डेटाबेस में उपलब्ध हैं
+                  <p className="text-sm text-slate-400 max-w-xl">
+                    कम्प्यूटर अनुदेशक परीक्षा — {questions.length} प्रश्न उपलब्ध • 23 अगस्त 2026
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                  <button
-                    onClick={() => setView("syllabus")}
-                    className="rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                  >
-                    <span>📋 Syllabus</span>
-                  </button>
-                  <button
-                    onClick={() => startPractice("All Subjects")}
-                    className="ssc-btn-secondary flex items-center justify-center gap-2"
-                  >
-                    <BookOpenIcon size={16} />
-                    <span>Practice Mode</span>
-                  </button>
-                  <button
-                    onClick={() => transitionToInstructions("All Subjects")}
-                    className="ssc-btn-primary flex items-center justify-center gap-2"
-                  >
-                    <TimerIcon size={16} />
-                    <span>Start Mock CBT</span>
-                  </button>
+                {/* Countdown Timer */}
+                <div className={`flex gap-3 ${countdownUrgency === 'critical' || countdownUrgency === 'danger' ? 'countdown-urgent animate-countdown' : ''}`}>
+                  {[
+                    { val: examCountdown.days, label: 'Days' },
+                    { val: examCountdown.hours, label: 'Hours' },
+                    { val: examCountdown.minutes, label: 'Mins' },
+                    { val: examCountdown.seconds, label: 'Secs' },
+                  ].map((item, i) => (
+                    <div key={i} className="countdown-card">
+                      <div className="countdown-number">{item.val.toString().padStart(2, '0')}</div>
+                      <div className="countdown-label">{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-5 border-t border-white/5">
+                <button
+                  onClick={() => setView("syllabus")}
+                  className="ssc-btn-secondary flex items-center justify-center gap-2"
+                >
+                  📋 Syllabus Tracker
+                </button>
+                <button
+                  onClick={() => startPractice("All Subjects")}
+                  className="ssc-btn-secondary flex items-center justify-center gap-2"
+                >
+                  <BookOpenIcon size={16} />
+                  Practice Mode
+                </button>
+                <button
+                  onClick={() => transitionToInstructions("All Subjects")}
+                  className="ssc-btn-primary flex items-center justify-center gap-2"
+                >
+                  <TimerIcon size={16} />
+                  🚀 Start Mock CBT
+                </button>
+              </div>
+            </div>
+
+            {/* ═══ MOTIVATIONAL QUOTE BANNER ═══ */}
+            <div className="quote-banner">
+              <p className="text-sm font-bold text-indigo-200 relative z-10">{todayQuote.hi}</p>
+              <p className="text-xs text-slate-400 mt-1 relative z-10">{todayQuote.en}</p>
+            </div>
+
+            {/* ═══ STATS + DAILY TARGET + PROGRESS RING ROW ═══ */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Questions</p>
+                  <BookOpenIcon size={18} className="text-indigo-400" />
+                </div>
+                <p className="text-2xl sm:text-3xl font-black mt-2 text-white">{dashboardStats.totalQuestions}</p>
+                <p className="text-[10px] text-slate-500 mt-1">In database</p>
+              </div>
+
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Attempts</p>
+                  <TrophyIcon size={18} className="text-purple-400" />
+                </div>
+                <p className="text-2xl sm:text-3xl font-black mt-2 text-white">{dashboardStats.totalAttempts}</p>
+                <p className="text-[10px] text-slate-500 mt-1">Tests done</p>
+              </div>
+
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Accuracy</p>
+                  <ChartIcon size={18} className="text-emerald-400" />
+                </div>
+                <p className={`text-2xl sm:text-3xl font-black mt-2 ${dashboardStats.averageAccuracy >= 70 ? 'text-emerald-400' : dashboardStats.averageAccuracy >= 40 ? 'text-amber-400' : 'text-rose-400'}`}>{dashboardStats.averageAccuracy}%</p>
+                <p className="text-[10px] text-slate-500 mt-1">Average</p>
+              </div>
+
+              <div className="stat-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Subjects</p>
+                  <DashboardIcon size={18} className="text-amber-400" />
+                </div>
+                <p className="text-2xl sm:text-3xl font-black mt-2 text-white">{Object.keys(dashboardStats.categoryStats).length}</p>
+                <p className="text-[10px] text-slate-500 mt-1">Active areas</p>
+              </div>
+
+              {/* Daily Target Widget */}
+              <div className="stat-card col-span-2 lg:col-span-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Target</p>
+                  <span className="text-lg">{dailyQuestionsSolved >= dailyQuestionsTarget ? '🎉' : '🎯'}</span>
+                </div>
+                <p className="text-2xl sm:text-3xl font-black mt-2 text-white">{dailyQuestionsSolved}<span className="text-sm text-slate-500">/{dailyQuestionsTarget}</span></p>
+                <div className="mt-2 w-full bg-slate-700/50 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full transition-all duration-700 ease-out animate-bar-grow"
+                    style={{ 
+                      width: `${Math.min(100, (dailyQuestionsSolved / dailyQuestionsTarget) * 100)}%`,
+                      background: dailyQuestionsSolved >= dailyQuestionsTarget 
+                        ? 'linear-gradient(90deg, #22c55e, #10b981)' 
+                        : 'linear-gradient(90deg, #6366f1, #818cf8)'
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">{dailyQuestionsSolved >= dailyQuestionsTarget ? '🎉 Target Complete!' : 'आज का लक्ष्य'}</p>
+              </div>
+            </div>
+
+            {/* ═══ PROGRESS RING + STUDY PLANNER + ANALYTICS ROW ═══ */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              {/* Syllabus Progress Ring */}
+              <div className="glass-premium rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-3">Syllabus Progress</p>
+                <div className="relative w-28 h-28">
+                  <svg className="w-28 h-28" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+                    <circle 
+                      cx="50" cy="50" r="42" fill="none" 
+                      stroke="url(#progressGradient)" 
+                      strokeWidth="8" 
+                      strokeLinecap="round"
+                      className="progress-ring-circle"
+                      strokeDasharray="264"
+                      strokeDashoffset={264 - (264 * (totalTopics > 0 ? completedTotalCount / totalTopics : 0))}
+                    />
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#6366f1" />
+                        <stop offset="100%" stopColor="#10b981" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-white">{totalTopics > 0 ? Math.round((completedTotalCount / totalTopics) * 100) : 0}%</span>
+                    <span className="text-[8px] text-slate-500 uppercase tracking-wider">Complete</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-3">{completedTotalCount}/{totalTopics} topics done</p>
+                <button 
+                  onClick={() => setView("syllabus")}
+                  className="mt-3 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer transition-colors"
+                >
+                  View Syllabus →
+                </button>
+              </div>
+
+              {/* Smart Study Planner */}
+              <div className="glass-premium rounded-2xl p-6">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-4">📅 Smart Study Planner</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                    <span className="text-xs text-slate-400">Days Left</span>
+                    <span className={`text-lg font-black ${studyPlan.daysLeft < 30 ? 'text-amber-400' : 'text-white'}`}>{studyPlan.daysLeft}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                    <span className="text-xs text-slate-400">Topics Left</span>
+                    <span className="text-lg font-black text-white">{studyPlan.topicsLeft}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/15">
+                    <span className="text-xs text-indigo-300 font-semibold">Daily Goal</span>
+                    <span className="text-lg font-black text-indigo-400">{studyPlan.topicsPerDay} <span className="text-[10px] text-slate-500">topics/day</span></span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 space-y-1 pt-1">
+                    <p>📄 Paper I: {studyPlan.paper1Left} topics remaining</p>
+                    <p>💻 Paper II: {studyPlan.paper2Left} topics remaining</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Performance Analytics */}
+              <div className="glass-premium rounded-2xl p-6">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-purple-400 mb-4">📊 Recent Performance</p>
+                {performanceBars.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-32 text-center">
+                    <ChartIcon size={32} className="text-slate-600 mb-2" />
+                    <p className="text-xs text-slate-500">No attempts yet</p>
+                    <p className="text-[10px] text-slate-600">Take a test to see analytics</p>
+                  </div>
+                ) : (
+                  <div className="flex items-end gap-2 h-32">
+                    {performanceBars.map((bar, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1" title={`${bar.score}% — ${bar.category}`}>
+                        <span className="text-[8px] font-bold text-slate-400">{bar.score}%</span>
+                        <div className="w-full bg-slate-700/30 rounded-t-sm relative" style={{ height: '100%' }}>
+                          <div 
+                            className="absolute bottom-0 left-0 right-0 rounded-t-sm transition-all duration-500"
+                            style={{ 
+                              height: `${bar.score}%`,
+                              background: bar.score >= 70 ? 'linear-gradient(180deg, #22c55e, #10b981)' : bar.score >= 40 ? 'linear-gradient(180deg, #f59e0b, #d97706)' : 'linear-gradient(180deg, #ef4444, #dc2626)'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
+                  <span className="text-[10px] text-slate-500">Focus Time</span>
+                  <span className="text-xs font-bold text-indigo-400">{totalFocusMinutes} min</span>
                 </div>
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="stat-card">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Questions</p>
-                  <BookOpenIcon size={20} className="text-blue-500" />
-                </div>
-                <p className="text-3xl font-extrabold mt-2 text-gray-900">{dashboardStats.totalQuestions}</p>
-                <p className="text-xs text-gray-400 mt-1">Active in database</p>
+            {/* ═══ ACHIEVEMENT BADGES ═══ */}
+            <div className="glass-premium rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400">🏅 Achievements ({achievements.length}/{ACHIEVEMENT_LIST.length})</p>
               </div>
-
-              <div className="stat-card">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Attempts</p>
-                  <TrophyIcon size={20} className="text-purple-500" />
-                </div>
-                <p className="text-3xl font-extrabold mt-2 text-gray-900">{dashboardStats.totalAttempts}</p>
-                <p className="text-xs text-gray-400 mt-1">Tests completed</p>
-              </div>
-
-              <div className="stat-card">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Accuracy</p>
-                  <ChartIcon size={20} className="text-green-500" />
-                </div>
-                <p className="text-3xl font-extrabold mt-2 text-gray-900">{dashboardStats.averageAccuracy}%</p>
-                <p className="text-xs text-gray-400 mt-1">Average score</p>
-              </div>
-
-              <div className="stat-card">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Categories</p>
-                  <DashboardIcon size={20} className="text-orange-500" />
-                </div>
-                <p className="text-3xl font-extrabold mt-2 text-gray-900">{Object.keys(dashboardStats.categoryStats).length}</p>
-                <p className="text-xs text-gray-400 mt-1">Subject areas</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                {ACHIEVEMENT_LIST.map((badge) => {
+                  const isUnlocked = achievements.includes(badge.id);
+                  return (
+                    <div 
+                      key={badge.id}
+                      className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`}
+                      title={badge.desc}
+                    >
+                      <div className={`text-2xl mb-1 ${isUnlocked ? '' : 'grayscale opacity-40'}`}>{badge.emoji}</div>
+                      <p className="text-[9px] font-bold text-slate-300 leading-tight">{badge.title}</p>
+                      {isUnlocked && <p className="text-[7px] text-indigo-400 mt-0.5">✓ Unlocked</p>}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -2174,12 +2602,12 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
             <div className="space-y-4 pt-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <TrophyIcon size={20} className="text-indigo-600 animate-pulse" />
-                    Available Mock Test Papers (उपलब्ध मॉक टेस्ट पेपर्स)
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <TrophyIcon size={20} className="text-indigo-400" />
+                    Mock Test Papers
                   </h3>
-                  <p className="text-xs text-gray-500">
-                    Select an uploaded question paper to practice, launch in timed CBT mode, or delete a specific batch.
+                  <p className="text-xs text-slate-500">
+                    Select a paper to practice or launch in timed CBT mode.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -2189,10 +2617,10 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                     </div>
                     <input
                       type="text"
-                      placeholder="पेपर, विषय या प्रश्न खोजें (Universal Search)..."
+                      placeholder="Search papers, subjects..."
                       value={universalSearch}
                       onChange={(e) => setUniversalSearch(e.target.value)}
-                      className="w-full text-xs pl-9 pr-8 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400 text-gray-800"
+                      className="w-full text-xs pl-9 pr-8 py-2.5 rounded-xl glass-input placeholder:text-slate-500"
                     />
                     {universalSearch && (
                       <button
@@ -2203,17 +2631,17 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
                       </button>
                     )}
                   </div>
-                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full shadow-sm shrink-0">
+                  <span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/15 px-3 py-1 rounded-full shadow-sm shrink-0">
                     {filteredQuizzes.length} Papers
                   </span>
                 </div>
               </div>
 
               {quizzes.length === 0 ? (
-                <div className="glass-premium rounded-2xl p-10 text-center text-gray-400 border border-dashed border-gray-200 bg-gray-50/50">
-                  <BookOpenIcon size={40} className="mx-auto text-gray-300 mb-3" />
-                  <p className="text-sm font-semibold text-gray-600">No question papers found in the database.</p>
-                  <p className="text-xs text-gray-400 mt-1">Use the Database panel above to manually add or upload via AI Bulk JSON Importer.</p>
+                <div className="glass-premium rounded-2xl p-10 text-center border border-dashed border-white/10">
+                  <BookOpenIcon size={40} className="mx-auto text-slate-600 mb-3" />
+                  <p className="text-sm font-semibold text-slate-400">No question papers found.</p>
+                  <p className="text-xs text-slate-600 mt-1">Use the Admin panel to add questions.</p>
                 </div>
               ) : filteredQuizzes.length === 0 ? (
                 <div className="glass-premium rounded-2xl p-8 text-center text-gray-500 border border-indigo-100 bg-indigo-50/10">
@@ -4508,16 +4936,16 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
       {/* 1. HTML5 Canvas Scratchpad (कच्चा काम/रफ़ बोर्ड) */}
       {showScratchpad && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[450px] bg-white border-l border-gray-200 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[450px] border-l border-white/5 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left" style={{ background: 'rgba(15, 22, 41, 0.95)', backdropFilter: 'blur(20px)' }}>
           <div>
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-indigo-600">📝</span>
-                <h3 className="text-sm font-bold text-slate-800">Virtual Scratchpad (रफ़ काम)</h3>
+                <span className="text-indigo-400">📝</span>
+                <h3 className="text-sm font-bold text-white">Virtual Scratchpad (रफ़ काम)</h3>
               </div>
               <button 
                 onClick={() => setShowScratchpad(false)}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors text-slate-500 hover:text-slate-800 cursor-pointer"
+                className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
               >
                 <XIcon size={16} />
               </button>
@@ -4585,16 +5013,16 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
       {/* 2. Core CS Cheat Sheet (शॉर्ट नोट्स) */}
       {showCheatSheet && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-white border-l border-gray-200 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] border-l border-white/5 shadow-2xl p-5 flex flex-col justify-between drawer-transition animate-slide-left" style={{ background: 'rgba(15, 22, 41, 0.95)', backdropFilter: 'blur(20px)' }}>
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-amber-500">⚡</span>
-                <h3 className="text-sm font-bold text-slate-800">CS Quick Revision Sheets</h3>
+                <span className="text-amber-400">⚡</span>
+                <h3 className="text-sm font-bold text-white">CS Quick Revision Sheets</h3>
               </div>
               <button 
                 onClick={() => setShowCheatSheet(false)}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors text-slate-500 hover:text-slate-800 cursor-pointer"
+                className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
               >
                 <XIcon size={16} />
               </button>
@@ -4726,7 +5154,7 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
 
       {/* 3. Draggable Programmer Calculator Popup (गणना यंत्र) */}
       {showCalculator && (
-        <div className="fixed bottom-6 right-6 z-50 w-72 bg-white border border-gray-200 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 animate-slide-up text-slate-800">
+        <div className="fixed bottom-6 right-6 z-50 w-72 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 animate-slide-up" style={{ background: 'rgba(15, 22, 41, 0.95)', border: '1px solid rgba(99, 102, 241, 0.12)', backdropFilter: 'blur(20px)' }}>
           <div className="flex items-center justify-between border-b border-gray-100 pb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700">
               <span>🧮</span>
@@ -4766,14 +5194,90 @@ Return ONLY a valid, raw JSON array (NO markdown formatting, NO \`\`\`json wrapp
         </div>
       )}
 
+      {/* 4. Pomodoro Focus Timer Popup */}
+      {showPomodoro && (
+        <div className="fixed bottom-6 left-6 z-50 w-72 focus-timer p-5 flex flex-col gap-4 animate-slide-up">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🍅</span>
+              <div>
+                <h4 className="text-xs font-bold text-white">{pomodoroMode === 'focus' ? 'Focus Time' : 'Break Time'}</h4>
+                <p className="text-[9px] text-slate-500">{pomodoroMode === 'focus' ? '25 min deep study' : '5 min rest'}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowPomodoro(false)}
+              className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
+            >
+              <XIcon size={14} />
+            </button>
+          </div>
+
+          {/* Timer Display */}
+          <div className="flex flex-col items-center">
+            <div 
+              className="pomodoro-ring w-32 h-32"
+              style={{ '--progress': `${((pomodoroMode === 'focus' ? 25 * 60 : 5 * 60) - pomodoroTime) / (pomodoroMode === 'focus' ? 25 * 60 : 5 * 60) * 100}%` } as React.CSSProperties}
+            >
+              <div className="pomodoro-inner">
+                <div className="text-center">
+                  <span className="text-2xl font-black text-white font-mono">
+                    {Math.floor(pomodoroTime / 60).toString().padStart(2, '0')}:{(pomodoroTime % 60).toString().padStart(2, '0')}
+                  </span>
+                  <p className="text-[8px] text-slate-500 uppercase tracking-wider mt-1">{pomodoroMode === 'focus' ? 'Focus' : 'Break'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPomodoroActive(!pomodoroActive)}
+              className={`flex-1 text-xs font-bold py-2.5 rounded-xl cursor-pointer transition-all ${
+                pomodoroActive 
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30' 
+                  : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30'
+              }`}
+            >
+              {pomodoroActive ? '⏸ Pause' : '▶ Start'}
+            </button>
+            <button
+              onClick={() => {
+                setPomodoroActive(false);
+                setPomodoroTime(25 * 60);
+                setPomodoroMode('focus');
+              }}
+              className="text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 transition-all"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between text-[9px] text-slate-500 pt-1 border-t border-white/5">
+            <span>Total Focus: {totalFocusMinutes} min</span>
+            <span className={pomodoroActive ? 'text-green-400 animate-pulse' : 'text-slate-600'}>
+              {pomodoroActive ? '● Active' : '○ Paused'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-6 px-6 md:px-12 mt-12 text-center text-xs text-gray-500">
+      <footer className="border-t border-white/5 py-8 px-6 md:px-12 mt-12 text-center text-xs relative z-10" style={{ background: 'rgba(8, 12, 24, 0.9)' }}>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 SSC CBT Exam Preparation Portal • Computer Instructor Exam</p>
-          <div className="flex items-center gap-3 text-gray-400">
-            <span>🔥 Firebase Powered</span>
-            <span>•</span>
-            <span>Responsive Design</span>
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <span className="text-[9px] font-black text-white">CI</span>
+            </div>
+            <p className="text-slate-500">© 2026 CI Prep Hub — Made with ❤️ for Computer Instructor Exam</p>
+          </div>
+          <div className="flex items-center gap-3 text-slate-600">
+            <span>🔥 Firebase</span>
+            <span className="text-slate-700">•</span>
+            <span>⚡ Next.js</span>
+            <span className="text-slate-700">•</span>
+            <span>🎯 Exam: 23 Aug 2026</span>
           </div>
         </div>
       </footer>
